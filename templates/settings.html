@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Intelly Jelly</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 28px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .nav-links a {
+            color: #667eea;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .nav-links a:hover {
+            background: #f0f0f0;
+        }
+        
+        .settings-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .settings-header {
+            margin-bottom: 30px;
+        }
+        
+        .settings-header h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .settings-header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .settings-section {
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .settings-section:last-child {
+            border-bottom: none;
+        }
+        
+        .settings-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+        }
+        
+        .checkbox-group label {
+            margin-bottom: 0;
+            cursor: pointer;
+        }
+        
+        .save-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        .save-btn:hover {
+            background: #5568d3;
+        }
+        
+        .save-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .alert {
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .alert.show {
+            display: block;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍇 Intelly Jelly</h1>
+            <div class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/settings">Settings</a>
+            </div>
+        </header>
+        
+        <div class="settings-container">
+            <div class="settings-header">
+                <h2>Settings</h2>
+                <p>Configure your media organizer application</p>
+            </div>
+            
+            <div id="alert" class="alert"></div>
+            
+            <form id="settings-form">
+                <div class="settings-section">
+                    <h3>Folder Paths</h3>
+                    
+                    <div class="form-group">
+                        <label for="downloading-path">Downloading Path</label>
+                        <input type="text" id="downloading-path" name="DOWNLOADING_PATH" placeholder="./test_folders/downloading">
+                        <small>Path to monitor for new files</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="completed-path">Completed Path</label>
+                        <input type="text" id="completed-path" name="COMPLETED_PATH" placeholder="./test_folders/completed">
+                        <small>Path where completed downloads appear</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="library-path">Library Path</label>
+                        <input type="text" id="library-path" name="LIBRARY_PATH" placeholder="./test_folders/library">
+                        <small>Path where organized files will be stored</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="instructions-path">Instructions File Path</label>
+                        <input type="text" id="instructions-path" name="INSTRUCTIONS_FILE_PATH" placeholder="./instructions.txt">
+                        <small>Path to the AI prompt instructions file</small>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Processing Settings</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="debounce-seconds">Debounce Seconds</label>
+                            <input type="number" id="debounce-seconds" name="DEBOUNCE_SECONDS" min="1" max="60" placeholder="5">
+                            <small>Wait time before processing batch</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="batch-size">AI Batch Size</label>
+                            <input type="number" id="batch-size" name="AI_BATCH_SIZE" min="1" max="100" placeholder="10">
+                            <small>Number of files to process at once</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>AI Configuration</h3>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ai-provider">AI Provider</label>
+                            <select id="ai-provider" name="AI_PROVIDER">
+                                <option value="ollama">Ollama</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="google">Google</option>
+                            </select>
+                            <small>Select your AI provider</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="ai-model">AI Model <span id="model-loading" class="loading" style="display: none;"></span></label>
+                            <select id="ai-model" name="AI_MODEL">
+                                <option value="">Loading models...</option>
+                            </select>
+                            <small>Select the AI model to use</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="ollama-url">Ollama API URL</label>
+                        <input type="text" id="ollama-url" name="OLLAMA_API_URL" placeholder="http://localhost:11434">
+                        <small>URL for Ollama API (only used when Ollama is selected)</small>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Advanced Options</h3>
+                    
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="dry-run" name="DRY_RUN_MODE">
+                            <label for="dry-run">Dry Run Mode</label>
+                        </div>
+                        <small>When enabled, files won't actually be moved (for testing)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="web-search" name="ENABLE_WEB_SEARCH">
+                            <label for="web-search">Enable Web Search</label>
+                        </div>
+                        <small>Allow AI to search the web for additional context</small>
+                    </div>
+                </div>
+                
+                <button type="submit" class="save-btn" id="save-btn">Save Settings</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        let currentConfig = {};
+        
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                currentConfig = await response.json();
+                
+                document.getElementById('downloading-path').value = currentConfig.DOWNLOADING_PATH || '';
+                document.getElementById('completed-path').value = currentConfig.COMPLETED_PATH || '';
+                document.getElementById('library-path').value = currentConfig.LIBRARY_PATH || '';
+                document.getElementById('instructions-path').value = currentConfig.INSTRUCTIONS_FILE_PATH || '';
+                document.getElementById('debounce-seconds').value = currentConfig.DEBOUNCE_SECONDS || 5;
+                document.getElementById('batch-size').value = currentConfig.AI_BATCH_SIZE || 10;
+                document.getElementById('ai-provider').value = currentConfig.AI_PROVIDER || 'ollama';
+                document.getElementById('ollama-url').value = currentConfig.OLLAMA_API_URL || 'http://localhost:11434';
+                document.getElementById('dry-run').checked = currentConfig.DRY_RUN_MODE || false;
+                document.getElementById('web-search').checked = currentConfig.ENABLE_WEB_SEARCH || false;
+                
+                await loadModels(currentConfig.AI_PROVIDER);
+            } catch (error) {
+                console.error('Error loading config:', error);
+                showAlert('Error loading configuration', 'error');
+            }
+        }
+        
+        async function loadModels(provider) {
+            const modelSelect = document.getElementById('ai-model');
+            const loadingIndicator = document.getElementById('model-loading');
+            
+            loadingIndicator.style.display = 'inline-block';
+            modelSelect.disabled = true;
+            modelSelect.innerHTML = '<option value="">Loading models...</option>';
+            
+            try {
+                const response = await fetch('/api/models', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ provider })
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const models = data.models;
+                    
+                    modelSelect.innerHTML = '';
+                    
+                    if (models.length === 0) {
+                        modelSelect.innerHTML = '<option value="">No models available</option>';
+                    } else {
+                        models.forEach(model => {
+                            const option = document.createElement('option');
+                            option.value = model;
+                            option.textContent = model;
+                            modelSelect.appendChild(option);
+                        });
+                        
+                        if (currentConfig.AI_MODEL) {
+                            modelSelect.value = currentConfig.AI_MODEL;
+                        }
+                    }
+                } else {
+                    modelSelect.innerHTML = '<option value="">Error loading models</option>';
+                }
+            } catch (error) {
+                console.error('Error loading models:', error);
+                modelSelect.innerHTML = '<option value="">Error loading models</option>';
+            } finally {
+                loadingIndicator.style.display = 'none';
+                modelSelect.disabled = false;
+            }
+        }
+        
+        document.getElementById('ai-provider').addEventListener('change', async (e) => {
+            await loadModels(e.target.value);
+        });
+        
+        document.getElementById('settings-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const saveBtn = document.getElementById('save-btn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            
+            const formData = new FormData(e.target);
+            const config = {};
+            
+            for (const [key, value] of formData.entries()) {
+                if (key === 'DRY_RUN_MODE' || key === 'ENABLE_WEB_SEARCH') {
+                    config[key] = document.getElementById(key === 'DRY_RUN_MODE' ? 'dry-run' : 'web-search').checked;
+                } else if (key === 'DEBOUNCE_SECONDS' || key === 'AI_BATCH_SIZE') {
+                    config[key] = parseInt(value);
+                } else {
+                    config[key] = value;
+                }
+            }
+            
+            try {
+                const response = await fetch('/api/config', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(config)
+                });
+                
+                if (response.ok) {
+                    showAlert('Settings saved successfully!', 'success');
+                    currentConfig = config;
+                } else {
+                    showAlert('Error saving settings', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving config:', error);
+                showAlert('Error saving settings', 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save Settings';
+            }
+        });
+        
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert alert-${type} show`;
+            
+            setTimeout(() => {
+                alert.classList.remove('show');
+            }, 5000);
+        }
+        
+        loadConfig();
+    </script>
+</body>
+</html>

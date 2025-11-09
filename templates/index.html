@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelly Jelly - Media Organizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            color: #667eea;
+            font-size: 28px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .nav-links a {
+            color: #667eea;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .nav-links a:hover {
+            background: #f0f0f0;
+        }
+        
+        .stats {
+            background: white;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        
+        .jobs-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .jobs-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .jobs-header h2 {
+            color: #333;
+        }
+        
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        
+        .refresh-btn:hover {
+            background: #5568d3;
+        }
+        
+        .jobs-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .jobs-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .jobs-table td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .jobs-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-queued { background: #ffeaa7; color: #d63031; }
+        .status-processing { background: #74b9ff; color: #0984e3; }
+        .status-pending { background: #a29bfe; color: #6c5ce7; }
+        .status-completed { background: #55efc4; color: #00b894; }
+        .status-failed { background: #ff7675; color: #d63031; }
+        .status-manual { background: #fdcb6e; color: #e17055; }
+        
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: opacity 0.3s;
+        }
+        
+        .btn:hover {
+            opacity: 0.8;
+        }
+        
+        .btn-edit {
+            background: #74b9ff;
+            color: white;
+        }
+        
+        .btn-reai {
+            background: #a29bfe;
+            color: white;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h3 {
+            color: #333;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .btn-secondary {
+            background: #ddd;
+            color: #333;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍇 Intelly Jelly</h1>
+            <div class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/settings">Settings</a>
+            </div>
+        </header>
+        
+        <div class="stats" id="stats">
+            <div class="stat-item">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total Jobs</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-queued">0</div>
+                <div class="stat-label">Queued</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-processing">0</div>
+                <div class="stat-label">Processing</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-pending">0</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-completed">0</div>
+                <div class="stat-label">Completed</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="stat-failed">0</div>
+                <div class="stat-label">Failed</div>
+            </div>
+        </div>
+        
+        <div class="jobs-container">
+            <div class="jobs-header">
+                <h2>Active Jobs</h2>
+                <button class="refresh-btn" onclick="loadJobs()">Refresh</button>
+            </div>
+            
+            <div id="jobs-list"></div>
+        </div>
+    </div>
+    
+    <div class="modal" id="edit-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Job</h3>
+                <button class="close-btn" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>New Name</label>
+                <input type="text" id="edit-name" placeholder="Enter new file name">
+            </div>
+            <div class="form-group">
+                <label>New Path (optional)</label>
+                <input type="text" id="edit-path" placeholder="e.g., Movies/Action/file.mp4">
+            </div>
+            <div class="form-actions">
+                <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveEdit()">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="reai-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Re-AI Job</h3>
+                <button class="close-btn" onclick="closeReAIModal()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label>Custom Prompt (optional)</label>
+                <textarea id="reai-prompt" placeholder="Enter custom instructions for the AI..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="btn-secondary" onclick="closeReAIModal()">Cancel</button>
+                <button class="btn-primary" onclick="saveReAI()">Process</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentJobId = null;
+        
+        function getStatusClass(status) {
+            const statusMap = {
+                'Queued for AI': 'status-queued',
+                'Processing AI': 'status-processing',
+                'Pending Completion': 'status-pending',
+                'Completed': 'status-completed',
+                'Failed': 'status-failed',
+                'Manual Edit': 'status-manual'
+            };
+            return statusMap[status] || 'status-queued';
+        }
+        
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                
+                document.getElementById('stat-total').textContent = stats.total;
+                document.getElementById('stat-queued').textContent = stats.queued;
+                document.getElementById('stat-processing').textContent = stats.processing;
+                document.getElementById('stat-pending').textContent = stats.pending;
+                document.getElementById('stat-completed').textContent = stats.completed;
+                document.getElementById('stat-failed').textContent = stats.failed;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        async function loadJobs() {
+            try {
+                const response = await fetch('/api/jobs');
+                const jobs = await response.json();
+                
+                const jobsList = document.getElementById('jobs-list');
+                
+                if (jobs.length === 0) {
+                    jobsList.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📁</div>
+                            <p>No jobs yet. Add files to the downloading folder to get started.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = `
+                    <table class="jobs-table">
+                        <thead>
+                            <tr>
+                                <th>Original Path</th>
+                                <th>Status</th>
+                                <th>New Name</th>
+                                <th>Confidence</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                jobs.forEach(job => {
+                    html += `
+                        <tr>
+                            <td>${job.relative_path}</td>
+                            <td><span class="status-badge ${getStatusClass(job.status)}">${job.status}</span></td>
+                            <td>${job.ai_determined_name || '-'}</td>
+                            <td>${job.confidence !== null ? job.confidence + '%' : '-'}</td>
+                            <td>
+                                <div class="actions">
+                                    <button class="btn btn-edit" onclick="openEditModal('${job.job_id}', '${job.ai_determined_name || job.relative_path}')">Edit</button>
+                                    <button class="btn btn-reai" onclick="openReAIModal('${job.job_id}')">Re-AI</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += `
+                        </tbody>
+                    </table>
+                `;
+                
+                jobsList.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading jobs:', error);
+            }
+        }
+        
+        function openEditModal(jobId, currentName) {
+            currentJobId = jobId;
+            document.getElementById('edit-name').value = currentName;
+            document.getElementById('edit-path').value = '';
+            document.getElementById('edit-modal').classList.add('active');
+        }
+        
+        function closeEditModal() {
+            document.getElementById('edit-modal').classList.remove('active');
+            currentJobId = null;
+        }
+        
+        async function saveEdit() {
+            const newName = document.getElementById('edit-name').value;
+            const newPath = document.getElementById('edit-path').value;
+            
+            if (!newName) {
+                alert('Please enter a new name');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/jobs/${currentJobId}/edit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        new_name: newName,
+                        new_path: newPath || null
+                    })
+                });
+                
+                if (response.ok) {
+                    closeEditModal();
+                    loadJobs();
+                    loadStats();
+                } else {
+                    alert('Error updating job');
+                }
+            } catch (error) {
+                console.error('Error saving edit:', error);
+                alert('Error updating job');
+            }
+        }
+        
+        function openReAIModal(jobId) {
+            currentJobId = jobId;
+            document.getElementById('reai-prompt').value = '';
+            document.getElementById('reai-modal').classList.add('active');
+        }
+        
+        function closeReAIModal() {
+            document.getElementById('reai-modal').classList.remove('active');
+            currentJobId = null;
+        }
+        
+        async function saveReAI() {
+            const customPrompt = document.getElementById('reai-prompt').value;
+            
+            try {
+                const response = await fetch(`/api/jobs/${currentJobId}/re-ai`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        custom_prompt: customPrompt || null
+                    })
+                });
+                
+                if (response.ok) {
+                    closeReAIModal();
+                    loadJobs();
+                    loadStats();
+                } else {
+                    alert('Error queuing job for re-processing');
+                }
+            } catch (error) {
+                console.error('Error saving re-AI:', error);
+                alert('Error queuing job for re-processing');
+            }
+        }
+        
+        loadJobs();
+        loadStats();
+        
+        setInterval(() => {
+            loadJobs();
+            loadStats();
+        }, 3000);
+    </script>
+</body>
+</html>
