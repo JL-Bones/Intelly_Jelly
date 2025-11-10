@@ -279,30 +279,12 @@
                 <div class="settings-section">
                     <h3>AI Configuration</h3>
                     
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="ai-provider">AI Provider</label>
-                            <select id="ai-provider" name="AI_PROVIDER">
-                                <option value="ollama">Ollama</option>
-                                <option value="openai">OpenAI</option>
-                                <option value="google">Google</option>
-                            </select>
-                            <small>Select your AI provider</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="ai-model">AI Model <span id="model-loading" class="loading" style="display: none;"></span></label>
-                            <select id="ai-model" name="AI_MODEL">
-                                <option value="">Loading models...</option>
-                            </select>
-                            <small>Select the AI model to use</small>
-                        </div>
-                    </div>
-                    
                     <div class="form-group">
-                        <label for="ollama-url">Ollama API URL</label>
-                        <input type="text" id="ollama-url" name="OLLAMA_API_URL" placeholder="http://localhost:11434">
-                        <small>URL for Ollama API (only used when Ollama is selected)</small>
+                        <label for="ai-model">AI Model <span id="model-loading" class="loading" style="display: none;"></span></label>
+                        <select id="ai-model" name="AI_MODEL">
+                            <option value="">Loading models...</option>
+                        </select>
+                        <small>Select the Google AI model to use</small>
                     </div>
                 </div>
                 
@@ -345,19 +327,17 @@
                 document.getElementById('instructions-path').value = currentConfig.INSTRUCTIONS_FILE_PATH || '';
                 document.getElementById('debounce-seconds').value = currentConfig.DEBOUNCE_SECONDS || 5;
                 document.getElementById('batch-size').value = currentConfig.AI_BATCH_SIZE || 10;
-                document.getElementById('ai-provider').value = currentConfig.AI_PROVIDER || 'ollama';
-                document.getElementById('ollama-url').value = currentConfig.OLLAMA_API_URL || 'http://localhost:11434';
                 document.getElementById('dry-run').checked = currentConfig.DRY_RUN_MODE || false;
                 document.getElementById('web-search').checked = currentConfig.ENABLE_WEB_SEARCH || false;
                 
-                await loadModels(currentConfig.AI_PROVIDER);
+                await loadModels();
             } catch (error) {
                 console.error('Error loading config:', error);
                 showAlert('Error loading configuration', 'error');
             }
         }
         
-        async function loadModels(provider) {
+        async function loadModels() {
             const modelSelect = document.getElementById('ai-model');
             const loadingIndicator = document.getElementById('model-loading');
             
@@ -371,7 +351,7 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ provider })
+                    body: JSON.stringify({ provider: 'google' })
                 });
                 
                 if (response.ok) {
@@ -405,10 +385,6 @@
                 modelSelect.disabled = false;
             }
         }
-        
-        document.getElementById('ai-provider').addEventListener('change', async (e) => {
-            await loadModels(e.target.value);
-        });
         
         document.getElementById('settings-form').addEventListener('submit', async (e) => {
             e.preventDefault();

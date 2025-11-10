@@ -67,8 +67,9 @@ def re_ai_job(job_id):
     custom_prompt = data.get('custom_prompt')
     include_instructions = data.get('include_instructions', True)
     include_filename = data.get('include_filename', True)
+    enable_web_search = data.get('enable_web_search', False)
     
-    success = orchestrator.re_ai_job(job_id, custom_prompt, include_instructions, include_filename)
+    success = orchestrator.re_ai_job(job_id, custom_prompt, include_instructions, include_filename, enable_web_search)
     
     if success:
         return jsonify({'success': True, 'message': 'Job queued for re-processing'})
@@ -94,7 +95,6 @@ def update_config():
         'AI_BATCH_SIZE',
         'AI_PROVIDER',
         'AI_MODEL',
-        'OLLAMA_API_URL',
         'DRY_RUN_MODE',
         'ENABLE_WEB_SEARCH'
     ]
@@ -120,9 +120,6 @@ def get_models():
         models = ai_processor.get_available_models(provider)
         return jsonify({'models': models})
     except Exception as e:
-        if provider == 'openai':
-            models = ai_processor._openai_chat_model_candidates()
-            return jsonify({'models': models, 'warning': str(e)}), 200
         return jsonify({'models': [], 'warning': str(e)}), 200
 
 

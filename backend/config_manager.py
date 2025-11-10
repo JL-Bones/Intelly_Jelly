@@ -52,12 +52,11 @@ class ConfigManager:
             "DOWNLOADING_PATH": "./test_folders/downloading",
             "COMPLETED_PATH": "./test_folders/completed",
             "LIBRARY_PATH": "./test_folders/library",
-            "INSTRUCTIONS_FILE_PATH": "./instructions.txt",
+            "INSTRUCTIONS_FILE_PATH": "./instructions.md",
             "DEBOUNCE_SECONDS": 5,
             "AI_BATCH_SIZE": 10,
-            "AI_PROVIDER": "ollama",
-            "AI_MODEL": "llama3:latest",
-            "OLLAMA_API_URL": "http://localhost:11434",
+            "AI_PROVIDER": "google",
+            "AI_MODEL": "gemini-pro",
             "DRY_RUN_MODE": False,
             "ENABLE_WEB_SEARCH": False
         }
