@@ -59,7 +59,8 @@ class ConfigManager:
             "AI_PROVIDER": "google",
             "AI_MODEL": "gemini-2.0-flash-exp",
             "DRY_RUN_MODE": False,
-            "ENABLE_WEB_SEARCH": True
+            "ENABLE_WEB_SEARCH": True,
+            "AI_CALL_DELAY_SECONDS": 2
         }
 
     def _start_watching(self):

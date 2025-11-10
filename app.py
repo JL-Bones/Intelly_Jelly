@@ -149,7 +149,8 @@ def update_config():
         'AI_PROVIDER',
         'AI_MODEL',
         'DRY_RUN_MODE',
-        'ENABLE_WEB_SEARCH'
+        'ENABLE_WEB_SEARCH',
+        'AI_CALL_DELAY_SECONDS'
     ]
     
     updates = {k: v for k, v in data.items() if k in allowed_fields}

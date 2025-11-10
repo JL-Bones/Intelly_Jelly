@@ -1,6 +1,7 @@
 import json
 import logging
 import requests
+import time
 from typing import List, Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -9,6 +10,7 @@ logger = logging.getLogger(__name__)
 class AIProcessor:
     def __init__(self, config_manager):
         self.config_manager = config_manager
+        self.last_api_call_time = 0
 
     def _get_instructions(self) -> str:
         instructions_path = self.config_manager.get('INSTRUCTIONS_FILE_PATH', './instructions.txt')
@@ -99,6 +101,15 @@ class AIProcessor:
             }
         
         try:
+            # Enforce delay between API calls to avoid rate limiting
+            delay_seconds = self.config_manager.get('AI_CALL_DELAY_SECONDS', 2)
+            time_since_last_call = time.time() - self.last_api_call_time
+            
+            if time_since_last_call < delay_seconds:
+                wait_time = delay_seconds - time_since_last_call
+                logger.info(f"Rate limit protection: waiting {wait_time:.2f} seconds before API call")
+                time.sleep(wait_time)
+            
             logger.info(f"Sending request to Google AI API: {model}")
             logger.debug(f"API URL: {url.split('?')[0]}")  # Log URL without API key
             logger.debug(f"Payload config: temperature={payload['generationConfig']['temperature']}, maxTokens={payload['generationConfig']['maxOutputTokens']}")
@@ -117,6 +128,7 @@ class AIProcessor:
             logger.info("=" * 80)
             
             response = requests.post(url, json=payload)
+            self.last_api_call_time = time.time()  # Record time of API call
             response.raise_for_status()
             
             logger.info(f"Received successful response from Google AI API (status: {response.status_code})")
