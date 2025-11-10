@@ -1,7 +1,6 @@
 import json
 import requests
-from typing import List, Dict, Optional, Tuple
-from openai import OpenAI
+from typing import List, Dict, Optional
 
 
 class AIProcessor:
@@ -33,41 +32,8 @@ class AIProcessor:
         
         return prompt
 
-    def process_batch_openai(self, file_paths: List[str], custom_prompt: Optional[str] = None, include_default: bool = True, include_filename: bool = True) -> List[Dict]:
-        api_key = self.config_manager.get_env('OPENAI_API_KEY')
-        if not api_key:
-            raise ValueError("OPENAI_API_KEY not found in environment")
-        
-        model = self.config_manager.get('AI_MODEL', 'gpt-3.5-turbo')
-        prompt = self._prepare_batch_prompt(file_paths, custom_prompt, include_default, include_filename)
-        
-        client = OpenAI(api_key=api_key)
-        
-        try:
-            response = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": "You are a helpful file naming assistant. Always respond with valid JSON."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7,
-                response_format={"type": "json_object"}
-            )
-            
-            result = json.loads(response.choices[0].message.content)
-            
-            if isinstance(result, dict) and 'files' in result:
-                return result['files']
-            elif isinstance(result, list):
-                return result
-            else:
-                return []
-                
-        except Exception as e:
-            print(f"OpenAI API error: {e}")
-            raise
-
-    def process_batch_google(self, file_paths: List[str], custom_prompt: Optional[str] = None, include_default: bool = True, include_filename: bool = True) -> List[Dict]:
+    def process_batch(self, file_paths: List[str], custom_prompt: Optional[str] = None, include_default: bool = True, include_filename: bool = True, enable_web_search: bool = False) -> List[Dict]:
+        """Process a batch of files using Google AI with optional web search."""
         api_key = self.config_manager.get_env('GOOGLE_API_KEY')
         if not api_key:
             raise ValueError("GOOGLE_API_KEY not found in environment")
@@ -75,19 +41,37 @@ class AIProcessor:
         model = self.config_manager.get('AI_MODEL', 'gemini-pro')
         prompt = self._prepare_batch_prompt(file_paths, custom_prompt, include_default, include_filename)
         
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-        
-        payload = {
-            "contents": [{
-                "parts": [{"text": prompt}]
-            }],
-            "generationConfig": {
-                "temperature": 0.7,
-                "topK": 1,
-                "topP": 1,
-                "maxOutputTokens": 2048,
+        if enable_web_search:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            
+            payload = {
+                "contents": [{
+                    "parts": [{"text": prompt}]
+                }],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "topK": 1,
+                    "topP": 1,
+                    "maxOutputTokens": 2048,
+                },
+                "tools": [{
+                    "googleSearchRetrieval": {}
+                }]
             }
-        }
+        else:
+            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+            
+            payload = {
+                "contents": [{
+                    "parts": [{"text": prompt}]
+                }],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "topK": 1,
+                    "topP": 1,
+                    "maxOutputTokens": 2048,
+                }
+            }
         
         try:
             response = requests.post(url, json=payload)
@@ -118,103 +102,13 @@ class AIProcessor:
             print(f"Google API error: {e}")
             raise
 
-    def process_batch_ollama(self, file_paths: List[str], custom_prompt: Optional[str] = None, include_default: bool = True, include_filename: bool = True) -> List[Dict]:
-        ollama_url = self.config_manager.get('OLLAMA_API_URL', 'http://localhost:11434')
-        model = self.config_manager.get('AI_MODEL', 'llama3:latest')
-        prompt = self._prepare_batch_prompt(file_paths, custom_prompt, include_default, include_filename)
-        
-        url = f"{ollama_url}/api/generate"
-        
-        payload = {
-            "model": model,
-            "prompt": prompt,
-            "stream": False,
-            "format": "json"
-        }
-        
-        try:
-            response = requests.post(url, json=payload, timeout=120)
-            response.raise_for_status()
-            
-            data = response.json()
-            text = data.get('response', '')
-            
-            result = json.loads(text)
-            
-            if isinstance(result, dict) and 'files' in result:
-                return result['files']
-            elif isinstance(result, list):
-                return result
-            else:
-                return []
-                
-        except Exception as e:
-            print(f"Ollama API error: {e}")
-            raise
-
-    def process_batch(self, file_paths: List[str], custom_prompt: Optional[str] = None, include_default: bool = True, include_filename: bool = True) -> List[Dict]:
-        provider = self.config_manager.get('AI_PROVIDER', 'ollama')
-        
-        if provider == 'openai':
-            return self.process_batch_openai(file_paths, custom_prompt, include_default, include_filename)
-        elif provider == 'google':
-            return self.process_batch_google(file_paths, custom_prompt, include_default, include_filename)
-        elif provider == 'ollama':
-            return self.process_batch_ollama(file_paths, custom_prompt, include_default, include_filename)
-        else:
-            raise ValueError(f"Unknown AI provider: {provider}")
-
     def get_available_models(self, provider: Optional[str] = None) -> List[str]:
-        if provider is None:
-            provider = self.config_manager.get('AI_PROVIDER', 'ollama')
-        
+        """Get available Google AI models."""
         try:
-            if provider == 'openai':
-                return self._get_openai_models()
-            elif provider == 'google':
-                return self._get_google_models()
-            elif provider == 'ollama':
-                return self._get_ollama_models()
-            else:
-                return []
+            return self._get_google_models()
         except Exception as e:
-            print(f"Error fetching models for {provider}: {e}")
-            if provider == 'openai':
-                return self._openai_chat_model_candidates()
+            print(f"Error fetching Google models: {e}")
             return []
-
-    def _openai_chat_model_candidates(self) -> List[str]:
-        return [
-            "gpt-4o",
-            "gpt-4o-mini",
-            "gpt-4-turbo",
-            "gpt-4",
-            "gpt-3.5-turbo",
-        ]
-
-    def _get_openai_models(self) -> List[str]:
-        api_key = self.config_manager.get_env('OPENAI_API_KEY')
-        if not api_key:
-            return self._openai_chat_model_candidates()
-        
-        org = self.config_manager.get_env('OPENAI_ORG') or self.config_manager.get_env('OPENAI_ORGANIZATION')
-        
-        try:
-            if org:
-                client = OpenAI(api_key=api_key, organization=org)
-            else:
-                client = OpenAI(api_key=api_key)
-            
-            models = client.models.list()
-            ids = [m.id for m in models.data]
-            
-            allowed_prefixes = ("gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4-turbo")
-            candidates = sorted({mid for mid in ids if mid.startswith(allowed_prefixes)})
-            
-            return candidates if candidates else self._openai_chat_model_candidates()
-        except Exception as e:
-            print(f"OpenAI models.list error: {e}")
-            return self._openai_chat_model_candidates()
 
     def _get_google_models(self) -> List[str]:
         api_key = self.config_manager.get_env('GOOGLE_API_KEY')
@@ -227,15 +121,4 @@ class AIProcessor:
         
         data = response.json()
         models = [m['name'].replace('models/', '') for m in data.get('models', [])]
-        return sorted(models)
-
-    def _get_ollama_models(self) -> List[str]:
-        ollama_url = self.config_manager.get('OLLAMA_API_URL', 'http://localhost:11434')
-        url = f"{ollama_url}/api/tags"
-        
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        
-        data = response.json()
-        models = [m['name'] for m in data.get('models', [])]
         return sorted(models)

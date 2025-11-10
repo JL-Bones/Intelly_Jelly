@@ -55,9 +55,8 @@ class ConfigManager:
             "INSTRUCTIONS_FILE_PATH": "./instructions.txt",
             "DEBOUNCE_SECONDS": 5,
             "AI_BATCH_SIZE": 10,
-            "AI_PROVIDER": "ollama",
-            "AI_MODEL": "llama3:latest",
-            "OLLAMA_API_URL": "http://localhost:11434",
+            "AI_PROVIDER": "google",
+            "AI_MODEL": "gemini-pro",
             "DRY_RUN_MODE": False,
             "ENABLE_WEB_SEARCH": False
         }

@@ -175,11 +175,13 @@ class BackendOrchestrator:
                         custom_prompt = job.custom_prompt
                         include_instructions = job.include_instructions
                         include_filename = job.include_filename
+                        enable_web_search = getattr(job, 'enable_web_search', False)
                         results = self.ai_processor.process_batch(
                             [job.relative_path],
                             custom_prompt=custom_prompt,
                             include_default=include_instructions,
-                            include_filename=include_filename
+                            include_filename=include_filename,
+                            enable_web_search=enable_web_search
                         )
                         
                         if results and len(results) > 0:
@@ -328,7 +330,7 @@ class BackendOrchestrator:
         
         return True
 
-    def re_ai_job(self, job_id: str, custom_prompt: Optional[str] = None, include_instructions: bool = True, include_filename: bool = True):
+    def re_ai_job(self, job_id: str, custom_prompt: Optional[str] = None, include_instructions: bool = True, include_filename: bool = True, enable_web_search: bool = False):
         job = self.job_store.get_job(job_id)
         if not job:
             return False
@@ -339,7 +341,8 @@ class BackendOrchestrator:
             custom_prompt=custom_prompt,
             priority=True,
             include_instructions=include_instructions,
-            include_filename=include_filename
+            include_filename=include_filename,
+            enable_web_search=enable_web_search
         )
         
         return True
