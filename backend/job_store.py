@@ -1,0 +1,115 @@
+import threading
+import uuid
+from datetime import datetime
+from typing import Dict, List, Optional
+from enum import Enum
+
+
+class JobStatus(Enum):
+    QUEUED_FOR_AI = "Queued for AI"
+    PROCESSING_AI = "Processing AI"
+    PENDING_COMPLETION = "Pending Completion"
+    COMPLETED = "Completed"
+    FAILED = "Failed"
+    MANUAL_EDIT = "Manual Edit"
+
+
+class Job:
+    def __init__(self, original_path: str, relative_path: str):
+        self.job_id = str(uuid.uuid4())
+        self.original_path = original_path
+        self.relative_path = relative_path
+        self.status = JobStatus.QUEUED_FOR_AI
+        self.ai_determined_name: Optional[str] = None
+        self.new_path: Optional[str] = None
+        self.confidence: Optional[int] = None
+        self.error_message: Optional[str] = None
+        self.created_at = datetime.now()
+        self.updated_at = datetime.now()
+        self.custom_prompt: Optional[str] = None
+        self.priority: bool = False
+
+    def to_dict(self) -> dict:
+        return {
+            'job_id': self.job_id,
+            'original_path': self.original_path,
+            'relative_path': self.relative_path,
+            'status': self.status.value,
+            'ai_determined_name': self.ai_determined_name,
+            'new_path': self.new_path,
+            'confidence': self.confidence,
+            'error_message': self.error_message,
+            'created_at': self.created_at.isoformat(),
+            'updated_at': self.updated_at.isoformat(),
+            'priority': self.priority
+        }
+
+    def update_status(self, status: JobStatus, **kwargs):
+        self.status = status
+        self.updated_at = datetime.now()
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+
+
+class JobStore:
+    def __init__(self):
+        self._jobs: Dict[str, Job] = {}
+        self._lock = threading.RLock()
+
+    def add_job(self, original_path: str, relative_path: str) -> Job:
+        with self._lock:
+            job = Job(original_path, relative_path)
+            self._jobs[job.job_id] = job
+            return job
+
+    def get_job(self, job_id: str) -> Optional[Job]:
+        with self._lock:
+            return self._jobs.get(job_id)
+
+    def get_job_by_path(self, path: str) -> Optional[Job]:
+        with self._lock:
+            for job in self._jobs.values():
+                if job.original_path == path or job.relative_path == path:
+                    return job
+            return None
+
+    def get_jobs_by_status(self, status: JobStatus) -> List[Job]:
+        with self._lock:
+            return [job for job in self._jobs.values() if job.status == status]
+
+    def get_all_jobs(self) -> List[Job]:
+        with self._lock:
+            return list(self._jobs.values())
+
+    def update_job(self, job_id: str, status: JobStatus, **kwargs) -> bool:
+        with self._lock:
+            job = self._jobs.get(job_id)
+            if job:
+                job.update_status(status, **kwargs)
+                return True
+            return False
+
+    def delete_job(self, job_id: str) -> bool:
+        with self._lock:
+            if job_id in self._jobs:
+                del self._jobs[job_id]
+                return True
+            return False
+
+    def get_priority_jobs(self) -> List[Job]:
+        with self._lock:
+            return [job for job in self._jobs.values() 
+                   if job.priority and job.status == JobStatus.QUEUED_FOR_AI]
+
+    def clear_completed_jobs(self, days: int = 7):
+        with self._lock:
+            cutoff = datetime.now().timestamp() - (days * 24 * 60 * 60)
+            to_delete = [
+                job_id for job_id, job in self._jobs.items()
+                if job.status == JobStatus.COMPLETED 
+                and job.updated_at.timestamp() < cutoff
+            ]
+            for job_id in to_delete:
+                del self._jobs[job_id]
+            return len(to_delete)
