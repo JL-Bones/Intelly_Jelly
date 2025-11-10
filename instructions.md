@@ -12,8 +12,9 @@ You must return **only a single JSON array** as your response. Each object in th
 
 1.  **Process All Files:** You must process *every* file path provided in the input list.
 2.  **Find Missing Info:** If **any** critical or unknown information (like a movie's release year, a TV series' full name, episode names, an author's name, book title, etc.) is missing, you **must use web search** to find the correct information before producing the output.
-3.  **Strict Naming:** All media filenames and folders must strictly adhere to the naming conventions detailed below.
-4.  **Valid Characters:** All suggested paths and filenames must be sanitized. Remove or replace any characters that are invalid in file systems (e.g., `?`, `*`, `<`, `>`, `|`, `"`). Colons (`:`) are a common invalid character in titles and **must** be replaced with a hyphen (`-`) or simply removed.
+3.  **Strict Folder Structure (Media):** For **Movies, TV Shows, Music, and Books**, you must adhere *exactly* to the folder structures defined. Do not create any additional subfolders not explicitly listed in the rules (e.g., `Season XX`, `extras`, `Album`, etc.). If an original file is in a non-standard subfolder (like `Part 1` or `Danish Dub`), this extra information **must be appended to the filename** (e.g., `Movie Title (Year) - Part 1.mkv` or `Movie Title (Year) - Danish Dub.mkv`). This rule does **not** apply to 'Software' or 'Other'.
+4.  **Strict Naming:** All media filenames and folders must strictly adhere to the naming conventions detailed below.
+5.  **Valid Characters:** All suggested paths and filenames must be sanitized. Remove or replace any characters that are invalid in file systems (e.g., `?`, `*`, `<`, `>`, `|`, `"`). Colons (`:`) are a common invalid character in titles and **must** be replaced with a hyphen (`-`) or simply removed.
 
 -----
 
@@ -45,6 +46,11 @@ You must return **only a single JSON array** as your response. Each object in th
   {
     "original_path": "Downloads/Best Movie (2019)/extras/bloopers.mkv",
     "suggested_name": "Movies/Best Movie (2019)/extras/bloopers.mkv",
+    "confidence": 100
+  },
+  {
+    "original_path": "Downloads/Best Movie (2019)/Part 1/file.mkv",
+    "suggested_name": "Movies/Best Movie (2019)/Best Movie (2019) - Part 1.mkv",
     "confidence": 100
   }
 ]
@@ -81,6 +87,11 @@ You must return **only a single JSON array** as your response. Each object in th
     "original_path": "Awesome.Show.S01.Extras/main_trailer.mp4",
     "suggested_name": "TV Shows/Awesome Show (2020)/Season 01/extras/main_trailer.mp4",
     "confidence": 95
+  },
+  {
+    "original_path": "TV/Awesome Show (2020)/S01E01/Danish Dub/show.mkv",
+    "suggested_name": "TV Shows/Awesome Show (2020)/Season 01/Awesome Show (2020) - S01E01 - Pilot - Danish Dub.mkv",
+    "confidence": 100
   }
 ]
 ```
