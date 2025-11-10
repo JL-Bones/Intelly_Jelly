@@ -105,6 +105,32 @@ def re_ai_job(job_id):
         return jsonify({'error': 'Internal server error'}), 500
 
 
+@app.route('/api/jobs/<job_id>', methods=['DELETE'])
+def delete_job(job_id):
+    logger.info(f"API: Delete job request for job_id={job_id}")
+    try:
+        job = job_store.get_job(job_id)
+        if not job:
+            logger.warning(f"Job {job_id} not found for deletion")
+            return jsonify({'error': 'Job not found'}), 404
+        
+        # Only allow deletion of completed jobs
+        if job.status != JobStatus.COMPLETED:
+            logger.warning(f"Cannot delete job {job_id} - status is {job.status.value}, not Completed")
+            return jsonify({'error': 'Only completed jobs can be deleted'}), 400
+        
+        success = job_store.delete_job(job_id)
+        if success:
+            logger.info(f"Job {job_id} deleted successfully")
+            return jsonify({'success': True, 'message': 'Job deleted successfully'})
+        
+        logger.error(f"Failed to delete job {job_id}")
+        return jsonify({'error': 'Failed to delete job'}), 500
+    except Exception as e:
+        logger.error(f"Error deleting job {job_id}: {type(e).__name__}: {e}", exc_info=True)
+        return jsonify({'error': 'Internal server error'}), 500
+
+
 @app.route('/api/config', methods=['GET'])
 def get_config():
     config = config_manager.get_all()

@@ -1,137 +1,346 @@
-# Intelly Jelly - Automated Media Organizer
+# 🍇 Intelly Jelly
 
-An advanced, automated media-organizing application with a multi-threaded Python backend for file monitoring and processing, and a local Flask web interface for monitoring, manual intervention, and full application configuration.
+**An intelligent, automated media organizer powered by AI**
 
-## Features
+Intelly Jelly is a multi-threaded Python application that watches your download folders and uses Google's Gemini AI to intelligently organize, rename, and categorize your media files. With a beautiful web interface and powerful automation, it takes the hassle out of managing your media library.
 
-- **Automated File Monitoring**: Watches downloading and completed folders for new files
-- **AI-Powered File Naming**: Uses OpenAI, Google, or Ollama to intelligently rename files
-- **Batch Processing**: Processes files in configurable batches with debounce timer
-- **Priority Queue**: Manual re-AI requests are processed immediately
-- **Web Interface**: Beautiful Flask-based UI for monitoring and configuration
-- **Dynamic Configuration**: Live reload of configuration without restarting
-- **Multi-threaded Architecture**: Efficient processing with separate threads for different tasks
+---
 
-## Architecture
+## ✨ Features
 
-### Backend Components
+- **🤖 AI-Powered Organization**: Uses Google Gemini AI to intelligently determine proper file names and folder structures
+- **👀 Real-Time Monitoring**: Automatically watches folders for new files and processes them in batches
+- **🌐 Web Search Integration**: Optional Google Search grounding for accurate information about movies, TV shows, music, and more
+- **🎨 Beautiful Web UI**: Clean, responsive interface for monitoring jobs and managing settings
+- **⚡ Priority Queue System**: Manually re-process files with custom prompts and immediate priority
+- **🔧 Dynamic Configuration**: Update settings without restarting the application
+- **🧵 Multi-Threaded**: Efficient concurrent processing with thread-safe operations
+- **📊 Real-Time Stats**: Live job status updates and processing statistics
+- **🎯 Flexible Rules**: Customizable organization rules for Movies, TV Shows, Music, Books, and more
+- **🏃 Dry Run Mode**: Test organization without actually moving files
+- **📝 Comprehensive Logging**: Detailed logging of all operations and API interactions
 
-1. **Job Store**: Thread-safe data structure tracking all file processing jobs
-2. **Configuration Manager**: Manages config.json with live reload capability
-3. **AI Processor**: Supports multiple AI providers (OpenAI, Google, Ollama)
-4. **File Watchers**: Monitor downloading and completed folders
-5. **Batch Processor**: Debounced batch processing with configurable timing
-6. **Priority Queue**: Dedicated thread for high-priority re-AI requests
+---
 
-### Frontend
+## 🚀 Quick Start
 
-- **Dashboard** (`/`): Real-time view of all jobs with auto-refresh
-- **Settings** (`/settings`): Full configuration management with dynamic AI model loading
+### Prerequisites
 
-## Installation
+- Python 3.8 or higher
+- Google AI API Key ([Get one here](https://makersuite.google.com/app/apikey))
 
-1. Clone the repository:
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/JL-Bones/Intelly_Jelly.git
+   cd Intelly_Jelly
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Set up your environment**
+   
+   Create a `.env` file in the root directory:
+   ```env
+   GOOGLE_API_KEY=your_api_key_here
+   ```
+
+4. **Configure your paths**
+   
+   Edit `config.json` to set your folder paths:
+   ```json
+   {
+     "DOWNLOADING_PATH": "./test_folders/downloading",
+     "COMPLETED_PATH": "./test_folders/completed",
+     "LIBRARY_PATH": "./test_folders/library",
+     "ENABLE_WEB_SEARCH": true
+   }
+   ```
+
+5. **Run the application**
+   ```bash
+   python app.py
+   ```
+
+6. **Open your browser**
+   
+   Navigate to: `http://localhost:7000`
+
+---
+
+## 📖 How It Works
+
+### The Workflow
+
+1. **Detection**: Files are detected in the `DOWNLOADING_PATH` folder
+2. **Queuing**: Jobs are created and queued for AI processing
+3. **AI Processing**: Gemini AI analyzes filenames and determines proper organization
+4. **Pending**: Jobs wait for files to appear in `COMPLETED_PATH` folder
+5. **Organization**: Files are automatically moved and renamed in `LIBRARY_PATH`
+
+### Example
+
+**Before:**
+```
+downloading/
+  ├── The.Best.Movie.2024.1080p.WEB-DL.mkv
+  └── awesome.show.s01e01.720p.mp4
+```
+
+**After Processing:**
+```
+library/
+  ├── Movies/
+  │   └── The Best Movie (2024)/
+  │       └── The Best Movie (2024).mkv
+  └── TV Shows/
+      └── Awesome Show/
+          └── Season 01/
+              └── Awesome Show - S01E01 - Episode Title.mp4
+```
+
+---
+
+## 🎮 Using the Web Interface
+
+### Dashboard (`/`)
+
+- **Job Queue**: View all active jobs and their status
+- **Statistics**: Real-time counts of queued, processing, pending, completed, and failed jobs
+- **Job Actions**:
+  - ✏️ **Edit**: Manually edit the AI-determined name and path
+  - 🔄 **Re-AI**: Re-process with custom prompts and options
+  - 🗑️ **Delete**: Remove completed jobs from the list
+
+### Settings (`/settings`)
+
+Configure all aspects of the application:
+
+- **Folder Paths**: Set downloading, completed, and library directories
+- **AI Settings**: Choose model, enable web search, adjust batch size
+- **Processing**: Configure debounce timing and dry run mode
+- **Instructions**: Customize the AI organization rules
+
+---
+
+## ⚙️ Configuration Options
+
+### `config.json`
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `DOWNLOADING_PATH` | Folder to watch for new files | `./test_folders/downloading` |
+| `COMPLETED_PATH` | Folder where downloaded files appear | `./test_folders/completed` |
+| `LIBRARY_PATH` | Destination for organized files | `./test_folders/library` |
+| `INSTRUCTIONS_FILE_PATH` | Path to AI instruction file | `./instructions.md` |
+| `DEBOUNCE_SECONDS` | Wait time before batch processing | `5` |
+| `AI_BATCH_SIZE` | Number of files to process at once | `10` |
+| `AI_MODEL` | Google AI model to use | `gemini-2.0-flash-exp` |
+| `DRY_RUN_MODE` | Test without moving files | `false` |
+| `ENABLE_WEB_SEARCH` | Enable Google Search grounding | `true` |
+
+### Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `GOOGLE_API_KEY` | Your Google AI API key | Yes |
+
+---
+
+## 📚 Media Organization Rules
+
+Intelly Jelly follows strict naming conventions for different media types:
+
+### 🎬 Movies
+```
+Movies/Movie Title (Year)/Movie Title (Year).ext
+```
+
+### 📺 TV Shows
+```
+TV Shows/Show Name/Season ##/Show Name - S##E## - Episode Title.ext
+```
+
+### 🎵 Music
+```
+Music/Artist Name/Album Name (Year)/## - Track Name.ext
+```
+
+### 📖 Books
+```
+Books/Author Name/Book Title (Year)/Book Title.ext
+```
+
+### 🎮 Games
+```
+Games/Platform/Game Title (Year)/Game Title.ext
+```
+
+For complete details, see [`instructions.md`](instructions.md) or the [File Organization Rules](Project_Wiki/06_File_Organization_Rules.md) documentation.
+
+---
+
+## 🔍 Web Search Feature
+
+When enabled, Intelly Jelly uses Google's Search grounding feature to find accurate information about your media:
+
+- **Movie Details**: Correct titles, release years, proper formatting
+- **TV Show Info**: Episode names, air dates, season numbers
+- **Music Metadata**: Artist names, album titles, track listings
+- **Book Information**: Author names, publication years, editions
+
+Enable web search in:
+1. Global settings (`config.json` → `ENABLE_WEB_SEARCH: true`)
+2. Per-job basis (Re-AI dialog → "Enable web search" checkbox)
+
+---
+
+## 🛠️ Advanced Usage
+
+### Custom Prompts
+
+Use the Re-AI feature to process files with custom instructions:
+
+```
+This is a Japanese anime movie from Studio Ghibli.
+Use the original Japanese title with English subtitle in parentheses.
+```
+
+### Manual Editing
+
+Override AI suggestions by clicking "Edit" on any job:
+- Change the destination filename
+- Specify a custom folder path
+- Correct any mistakes
+
+### Priority Processing
+
+Re-AI requests are processed immediately, bypassing the batch queue for instant results.
+
+---
+
+## 📊 API Endpoints
+
+Intelly Jelly provides a RESTful API for integration:
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/jobs` | Get all jobs |
+| `GET` | `/api/jobs/<id>` | Get specific job |
+| `POST` | `/api/jobs/<id>/edit` | Edit job name/path |
+| `POST` | `/api/jobs/<id>/re-ai` | Re-process with AI |
+| `DELETE` | `/api/jobs/<id>` | Delete completed job |
+| `GET` | `/api/config` | Get configuration |
+| `POST` | `/api/config` | Update configuration |
+| `POST` | `/api/models` | Get available AI models |
+| `GET` | `/api/stats` | Get processing statistics |
+
+---
+
+## 📖 Documentation
+
+For in-depth technical documentation, see the [Project Wiki](Project_Wiki/):
+
+- [Architecture Overview](Project_Wiki/01_Architecture_Overview.md)
+- [Backend Components](Project_Wiki/02_Backend_Components.md)
+- [Frontend Interface](Project_Wiki/03_Frontend_Interface.md)
+- [Configuration Guide](Project_Wiki/04_Configuration_Guide.md)
+- [Processing Workflows](Project_Wiki/05_Processing_Workflows.md)
+- [File Organization Rules](Project_Wiki/06_File_Organization_Rules.md)
+- [Development Guide](Project_Wiki/07_Development_Guide.md)
+
+---
+
+## 🐛 Troubleshooting
+
+### Jobs Stuck in "Processing"
+
+- Check `intelly_jelly.log` for error messages
+- Verify your Google API key is valid
+- Ensure the AI model supports your request
+
+### Files Not Moving
+
+- Confirm files are in the `COMPLETED_PATH` folder
+- Check file permissions
+- Enable dry run mode to test without moving files
+
+### Web Search Not Working
+
+- Ensure `ENABLE_WEB_SEARCH` is `true` in config
+- Verify you're using a compatible Gemini model (2.0+ recommended)
+- Check API logs for any grounding errors
+
+### API Rate Limits
+
+- Reduce `AI_BATCH_SIZE` in settings
+- Increase `DEBOUNCE_SECONDS` to process less frequently
+- Monitor the logs for 429 errors
+
+---
+
+## 🧪 Development
+
+### Running Tests
+
 ```bash
-git clone https://github.com/JL-Bones/Intelly_Jelly.git
-cd Intelly_Jelly
+python test_functionality.py
 ```
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+### Logging
 
-3. Create a `.env` file with your API keys:
-```bash
-cp .env.example .env
-# Edit .env and add your API keys
-```
+Logs are written to:
+- Console (stdout)
+- `intelly_jelly.log` file
 
-4. Configure the application by editing `config.json` or use the web interface
+Detailed API request/response logging is included for debugging.
 
-## Usage
+### Contributing
 
-1. Start the application:
-```bash
-python app.py
-```
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-2. Open your browser and navigate to:
-```
-http://localhost:7000
-```
+---
 
-3. Configure your settings in the Settings page
+## 📜 License
 
-4. Add files to the downloading folder to start processing
+This project is provided as-is for personal use. See repository for license details.
 
-## Configuration
+---
 
-### config.json (Managed via Web UI)
+## 🙏 Acknowledgments
 
-- `DOWNLOADING_PATH`: Path to monitor for new files
-- `COMPLETED_PATH`: Path where completed downloads appear
-- `LIBRARY_PATH`: Path where organized files will be stored
-- `INSTRUCTIONS_FILE_PATH`: Path to AI prompt instructions
-- `DEBOUNCE_SECONDS`: Wait time before processing batch
-- `AI_BATCH_SIZE`: Number of files to process at once
-- `AI_PROVIDER`: AI provider (openai, google, ollama)
-- `AI_MODEL`: AI model to use
-- `OLLAMA_API_URL`: Ollama API URL (default: http://localhost:11434)
-- `DRY_RUN_MODE`: Test mode without actually moving files
-- `ENABLE_WEB_SEARCH`: Allow AI to search the web
+- **Google Gemini AI**: For powerful language understanding and generation
+- **Flask**: For the lightweight web framework
+- **Watchdog**: For reliable file system monitoring
+- **Contributors**: Thanks to everyone who has contributed to this project
 
-### .env (Manual Configuration)
+---
 
-- `OPENAI_API_KEY`: Your OpenAI API key
-- `GOOGLE_API_KEY`: Your Google API key
+## 📞 Support
 
-## Workflow
+- **Issues**: [GitHub Issues](https://github.com/JL-Bones/Intelly_Jelly/issues)
+- **Documentation**: [Project Wiki](Project_Wiki/)
+- **Logs**: Check `intelly_jelly.log` for detailed information
 
-### Stage 1: Monitor & Batch Process
+---
 
-1. Files detected in downloading folder are added to the job queue
-2. Debounce timer starts/resets with each new file
-3. When timer completes, files are batched and sent to AI
-4. AI returns suggested names and confidence scores
-5. Jobs are marked as "Pending Completion"
+## 🗺️ Roadmap
 
-### Stage 2: Execute & Organize
+- [ ] Support for additional AI providers (OpenAI, Anthropic)
+- [ ] Automatic metadata fetching and tagging
+- [ ] Integration with media servers (Plex, Jellyfin)
+- [ ] Mobile app for remote monitoring
+- [ ] Advanced filtering and search
+- [ ] Scheduled processing windows
+- [ ] Webhook notifications
 
-1. Files appearing in completed folder are matched to pending jobs
-2. Files are renamed and moved to library folder
-3. Jobs are marked as "Completed"
+---
 
-### Manual Intervention
-
-- **Edit Job**: Manually set the new name and path
-- **Re-AI**: Reprocess with optional custom prompt (priority queue)
-
-## API Endpoints
-
-- `GET /api/jobs` - Get all jobs
-- `GET /api/jobs/<job_id>` - Get specific job
-- `POST /api/jobs/<job_id>/edit` - Manually edit job
-- `POST /api/jobs/<job_id>/re-ai` - Queue job for re-processing
-- `GET /api/config` - Get current configuration
-- `POST /api/config` - Update configuration
-- `POST /api/models` - Get available AI models for provider
-- `GET /api/stats` - Get job statistics
-
-## Development
-
-The application uses a multi-threaded architecture:
-
-- Main thread: Flask web server
-- Background thread: Backend orchestrator
-- File watcher threads: Monitor downloading and completed folders
-- Debounce thread: Batch processing timer
-- Priority queue thread: Process re-AI requests
-
-## License
-
-MIT License
-
-## Author
-
-Created by @JL-Bones
+**Made with ❤️ and AI**

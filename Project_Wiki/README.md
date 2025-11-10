@@ -2,6 +2,19 @@
 
 > Comprehensive technical documentation for the Intelly Jelly automated media organizer
 
+## 🆕 Recent Improvements
+
+**Latest Updates**:
+- ✅ **Comprehensive API Logging**: Full request/response logging for Google AI API calls
+- ✅ **Web Search Enhancement**: Fixed and improved Google Search grounding functionality
+- ✅ **Dynamic Retrieval**: Configured dynamic threshold-based web search activation
+- ✅ **Updated Documentation**: All wiki docs updated to reflect current implementation
+- ✅ **Main README**: Added comprehensive project README with installation and usage guide
+
+These improvements enhance debugging capabilities and ensure web search works correctly for accurate media information retrieval.
+
+---
+
 ## 📚 Documentation Index
 
 This DeepWiki provides complete, in-depth documentation of every aspect of the Intelly Jelly application. Whether you're a developer, system administrator, or power user, you'll find detailed information about how the system works.
@@ -32,6 +45,7 @@ This DeepWiki provides complete, in-depth documentation of every aspect of the I
 - Technology stack
 - Threading model details
 - Complete data flow
+- Google Search grounding integration
 
 **Read This If**:
 - You want to understand how everything fits together
@@ -44,16 +58,17 @@ This DeepWiki provides complete, in-depth documentation of every aspect of the I
 - Threading model with 6 concurrent threads
 - Data flow through 4 processing stages
 - Integration points between components
+- Web search and AI grounding capabilities
 
 ---
 
 ### 02. Backend Components
 
 **What's Inside**:
-- Job Store: Thread-safe state management
+- Job Store: Thread-safe state management with web search support
 - Configuration Manager: Live config reload
-- AI Processor: Google AI integration
-- Backend Orchestrator: Central coordination
+- AI Processor: Google AI integration with comprehensive logging
+- Backend Orchestrator: Central coordination with web search
 - File Watchers: File system monitoring
 
 **Read This If**:
@@ -61,18 +76,22 @@ This DeepWiki provides complete, in-depth documentation of every aspect of the I
 - You need to understand thread safety
 - You're debugging backend issues
 - You want to add new capabilities
+- You're troubleshooting API interactions
 
 **Key Sections**:
 - Complete API documentation for each class
 - Thread safety mechanisms explained
 - Usage examples for every component
 - Integration patterns
+- Comprehensive API request/response logging
+- Web search grounding configuration
 
 **Code Coverage**:
 - 5 backend modules fully documented
 - Every class, method, and attribute
 - Thread safety patterns
 - Error handling approaches
+- API logging and debugging features
 
 ---
 

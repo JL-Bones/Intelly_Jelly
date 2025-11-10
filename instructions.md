@@ -1,51 +1,50 @@
-### 1. 🎯 Core Task & Output Format
+### 1\. 🎯 Core Task & Output Format
 
-Your task is to process a given list of file paths. For each input file, you must first determine its **strictly correct full destination path** based on the organizational rules below.
-
-From this full destination path, you will then extract **only the final filename** to use as the `suggested_name`.
+Your task is to process a given list of file paths and determine their **strictly correct full relative destination path** based on the organizational rules below.
 
 You must return **only a single JSON array** as your response. Each object in the array must contain:
 
-* `"original_path"`: The original file path from the input.
-* `"suggested_name"`: The new, correctly formatted **filename** (e.g., `Movie Title (Year).mkv`), not the full path.
-* `"confidence"`: A 0-100 score of your confidence in the suggestion.
+  * `"original_path"`: The original file path from the input.
+  * `"suggested_name"`: The new, correctly formatted **full relative path** (e.g., `Movies/Movie Title (Year)/Movie Title (Year).mkv`), which **must not** contain any invalid filesystem characters.
+  * `"confidence"`: A 0-100 score of your confidence in the suggestion.
 
-### 2. 🔍 General Rules
+### 2\. 🔍 General Rules
 
 1.  **Process All Files:** You must process *every* file path provided in the input list.
-2.  **Find Missing Info:** If critical information (like a movie's release year, a TV series' full name, or episode numbers) is missing from the filename, you **must use web search** to find the correct information before producing the output.
+2.  **Find Missing Info:** If **any** critical or unknown information (like a movie's release year, a TV series' full name, episode names, an author's name, book title, etc.) is missing, you **must use web search** to find the correct information before producing the output.
 3.  **Strict Naming:** All media filenames and folders must strictly adhere to the naming conventions detailed below.
+4.  **Valid Characters:** All suggested paths and filenames must be sanitized. Remove or replace any characters that are invalid in file systems (e.g., `?`, `*`, `<`, `>`, `|`, `"`). Colons (`:`) are a common invalid character in titles and **must** be replaced with a hyphen (`-`) or simply removed.
 
----
+-----
 
-### 3. 📂 Media Organization Rules
+### 3\. 📂 Media Organization Rules
 
 #### 🎬 Movies
 
-* **Folder Structure:** `Movies/Movie Title (Year)/`
-* **File Naming:** `Movie Title (Year).ext` (e.g., `.mkv`, `.mp4`)
-* **Versions:** For multiple versions, add a suffix after the year (e.g., `Movie Title (Year) - 1080p.mkv`, `Movie Title (Year) - Directors Cut.mkv`).
-* **Subtitles/Artwork:** Place in the same folder, matching the movie's base filename (e.g., `Movie Title (Year).en.srt`).
-* **Extras:** Place in a subfolder within the movie's folder.
-    * **Valid Subfolders:** `behind the scenes`, `deleted scenes`, `interviews`, `scenes`, `samples`, `shorts`, `featurettes`, `clips`, `other`, `extras`, `trailers`.
-    * **File Naming:** Use descriptive names for files inside these folders (e.g., `trailers/Main Trailer.mp4`).
+  * **Folder Structure:** `Movies/Movie Title (Year)/`
+  * **File Naming:** `Movie Title (Year).ext` (e.g., `.mkv`, `.mp4`)
+  * **Subtitles/Artwork:** Place in the same folder, matching the movie's base filename (e.g., `Movie Title (Year).en.srt`).
+  * **Extras:** Place in a subfolder within the movie's folder.
+      * **Valid Subfolders:** `behind the scenes`, `deleted scenes`, `interviews`, `scenes`, `samples`, `shorts`, `featurettes`, `clips`, `other`, `extras`, `trailers`.
+      * **File Naming:** Use descriptive names for files inside these folders (e.g., `trailers/Main Trailer.mp4`).
 
 **Example JSON Output:**
+
 ```json
 [
   {
     "original_path": "C:/Downloads/Best.Movie.Ever.2019.1080p.mp4",
-    "suggested_name": "Best Movie Ever (2019) - 1080p.mp4",
+    "suggested_name": "Movies/Best Movie Ever (2019)/Best Movie Ever (2019).mp4",
     "confidence": 100
   },
   {
     "original_path": "C:/Downloads/Best.Movie.Ever.2019.en_us.srt",
-    "suggested_name": "Best Movie Ever (2019).en_us.srt",
+    "suggested_name": "Movies/Best Movie Ever (2019)/Best Movie Ever (2019).en_us.srt",
     "confidence": 100
   },
   {
     "original_path": "Downloads/Best Movie (2019)/extras/bloopers.mkv",
-    "suggested_name": "bloopers.mkv",
+    "suggested_name": "Movies/Best Movie (2019)/extras/bloopers.mkv",
     "confidence": 100
   }
 ]
@@ -56,9 +55,10 @@ You must return **only a single JSON array** as your response. Each object in th
 #### 📺 TV Shows
 
   * **Folder Structure:** `TV Shows/Series Name (Year)/Season XX/` (e.g., `Season 01`, `Season 02`)
-  * **File Naming:** `Series Name (Year) - SXXEYY.ext` (e.g., `S01E02`).
-      * For multi-part episodes: `Series Name (Year) - SXXEYY - EZZ.ext`.
-      * Optionally append episode title: `... - SXXEYY - Episode Name.ext`.
+  * **File Naming:** The format is `Series Name (Year) - SXXEYY - Episode Name.ext`.
+      * You **must** search for and include the episode name.
+      * If an episode name **cannot be found** after searching, use the fallback format `Series Name (Year) - SXXEYY.ext` and **lower the confidence score**.
+      * For multi-part episodes: `Series Name (Year) - SXXEYY - EZZ - Episode Name.ext`.
   * **Extras:** Place in subfolders at the **Series level** or **Season level**.
       * **Valid Subfolders:** `behind the scenes`, `deleted scenes`, `interviews`, `scenes`, `samples`, `shorts`, `featurettes`, `clips`, `other`, `extras`, `trailers`.
       * **File Naming:** Use descriptive names (e.g., `Season 01/interviews/Interview with Cast.mp4`).
@@ -69,12 +69,17 @@ You must return **only a single JSON array** as your response. Each object in th
 [
   {
     "original_path": "torrents/series.name.a.s01e02.hdtv.mkv",
-    "suggested_name": "Series Name A (2010) - S01E02.mkv",
+    "suggested_name": "TV Shows/Series Name A (2010)/Season 01/Series Name A (2010) - S01E02 - The Episode Title.mkv",
     "confidence": 100
   },
   {
+    "original_path": "torrents/obscure.show.s02e03.mkv",
+    "suggested_name": "TV Shows/Obscure Show (2021)/Season 02/Obscure Show (2021) - S02E03.mkv",
+    "confidence": 85
+  },
+  {
     "original_path": "Awesome.Show.S01.Extras/main_trailer.mp4",
-    "suggested_name": "main_trailer.mp4",
+    "suggested_name": "TV Shows/Awesome Show (2020)/Season 01/extras/main_trailer.mp4",
     "confidence": 95
   }
 ]
@@ -85,7 +90,7 @@ You must return **only a single JSON array** as your response. Each object in th
 #### 🎵 Music
 
   * **Folder Structure:** `Music/Artist/Album/` or `Music/Album/`.
-  * **File Naming:** For the `suggested_name`, use the tagged track title if possible (e.g., `01 - Song Title.mp3`). If tags are unavailable, use a clean version of the original filename.
+  * **File Naming:** Use embedded tags to create the filename (e.g., `01 - Song Title.mp3`). If tags are unavailable, use a clean version of the original filename.
   * **Multi-Disc:** Can be in `Disc X` subfolders or all in the root album folder. Use embedded tags for disc numbers.
   * **Lyrics:** Must be in the album folder and **exactly match** the audio track's filename, but with a `.lrc`, `.elrc`, or `.txt` extension.
 
@@ -95,17 +100,17 @@ You must return **only a single JSON array** as your response. Each object in th
 [
   {
     "original_path": "rips/Some Artist/Album A/01.flac",
-    "suggested_name": "Song 1.flac",
+    "suggested_name": "Music/Some Artist/Album A/01 - Song 1.flac",
     "confidence": 90
   },
   {
     "original_path": "Music/Album X/track 2.mp3",
-    "suggested_name": "Name Your.mp3",
+    "suggested_name": "Music/Album X/02 - Name Your.mp3",
     "confidence": 90
   },
   {
     "original_path": "Music/Album X/track 2.lrc",
-    "suggested_name": "Name Your.lrc",
+    "suggested_name": "Music/Album X/02 - Name Your.lrc",
     "confidence": 100
   }
 ]
@@ -127,17 +132,17 @@ You must return **only a single JSON array** as your response. Each object in th
 [
   {
     "original_path": "zips/auth_book4.epub",
-    "suggested_name": "Book4.epub",
+    "suggested_name": "Books/Books/Auth Name/Book4/Book4.epub",
     "confidence": 90
   },
   {
     "original_path": "cbr/PlasticMan_002_1944.cbz",
-    "suggested_name": "Plastic Man #002 (1944).cbz",
+    "suggested_name": "Books/Comics/Plastic Man (1944)/Plastic Man #002 (1944).cbz",
     "confidence": 100
   },
   {
     "original_path": "audio/Author/Book1/track 1.mp3",
-    "suggested_name": "Book1.mp3",
+    "suggested_name": "Books/Audiobooks/Author/Book1/track 1.mp3",
     "confidence": 95
   }
 ]
@@ -156,12 +161,12 @@ You must return **only a single JSON array** as your response. Each object in th
 [
   {
     "original_path": "Software/Ableton Live 11 Suite v11.3.12/HaxNode.Net.txt",
-    "suggested_name": "HaxNode.Net.txt",
+    "suggested_name": "Software/Ableton Live 11 Suite v11.3.12/HaxNode.Net.txt",
     "confidence": 100
   },
   {
     "original_path": "Software/SomeApp_v2.0-Full/docs/manual.pdf",
-    "suggested_name": "manual.pdf",
+    "suggested_name": "Software/SomeApp_v2.0-Full/docs/manual.pdf",
     "confidence": 100
   }
 ]
@@ -180,7 +185,7 @@ You must return **only a single JSON array** as your response. Each object in th
 [
   {
     "original_path": "C:/Users/Me/Desktop/my_document.txt",
-    "suggested_name": "my_document.txt",
+    "suggested_name": "Other/my_document.txt",
     "confidence": 100
   }
 ]

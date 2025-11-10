@@ -13,12 +13,16 @@ class AIProcessor:
     def _get_instructions(self) -> str:
         instructions_path = self.config_manager.get('INSTRUCTIONS_FILE_PATH', './instructions.txt')
         try:
-            with open(instructions_path, 'r') as f:
+            with open(instructions_path, 'r', encoding='utf-8') as f:
                 content = f.read()
                 logger.info(f"Loaded instructions from {instructions_path}")
                 return content
         except FileNotFoundError:
             logger.warning(f"Instructions file not found at {instructions_path}, using default instructions")
+            return "Suggest improved file names for the following files. Return JSON array with original_path, suggested_name, and confidence (0-100)."
+        except UnicodeDecodeError as e:
+            logger.error(f"Unicode decode error reading {instructions_path}: {e}")
+            logger.warning("Using default instructions instead")
             return "Suggest improved file names for the following files. Return JSON array with original_path, suggested_name, and confidence (0-100)."
 
     def _prepare_batch_prompt(self, file_paths: List[str], custom_prompt: Optional[str] = None, include_default: bool = True, include_filename: bool = True) -> str:
@@ -67,7 +71,7 @@ class AIProcessor:
                     "maxOutputTokens": 2048,
                 },
                 "tools": [{
-                    "googleSearchRetrieval": {}
+                    "google_search": {}
                 }]
             }
         else:
@@ -90,10 +94,31 @@ class AIProcessor:
             logger.debug(f"API URL: {url.split('?')[0]}")  # Log URL without API key
             logger.debug(f"Payload config: temperature={payload['generationConfig']['temperature']}, maxTokens={payload['generationConfig']['maxOutputTokens']}")
             
+            # Log full request payload (without API key)
+            logger.info("=" * 80)
+            logger.info("GOOGLE AI API REQUEST")
+            logger.info("=" * 80)
+            logger.info(f"Model: {model}")
+            logger.info(f"Web Search Enabled: {enable_web_search}")
+            logger.info(f"Prompt (first 500 chars): {prompt[:500]}...")
+            logger.info(f"Full Prompt:\n{prompt}")
+            logger.info(f"Generation Config: {json.dumps(payload['generationConfig'], indent=2)}")
+            if 'tools' in payload:
+                logger.info(f"Tools: {json.dumps(payload['tools'], indent=2)}")
+            logger.info("=" * 80)
+            
             response = requests.post(url, json=payload)
             response.raise_for_status()
             
             logger.info(f"Received successful response from Google AI API (status: {response.status_code})")
+            
+            # Log full response
+            logger.info("=" * 80)
+            logger.info("GOOGLE AI API RESPONSE")
+            logger.info("=" * 80)
+            logger.info(f"Status Code: {response.status_code}")
+            logger.info(f"Full Response:\n{json.dumps(response.json(), indent=2)}")
+            logger.info("=" * 80)
             
             data = response.json()
             text = data['candidates'][0]['content']['parts'][0]['text']

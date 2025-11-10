@@ -30,6 +30,7 @@ class Job:
         self.priority: bool = False
         self.include_instructions: bool = True
         self.include_filename: bool = True
+        self.enable_web_search: bool = False
 
     def to_dict(self) -> dict:
         return {

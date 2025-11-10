@@ -151,9 +151,13 @@ class BackendOrchestrator:
         
         file_paths = [job.relative_path for job in jobs]
         
+        # Get web search setting from config
+        enable_web_search = self.config_manager.get('ENABLE_WEB_SEARCH', False)
+        logger.debug(f"Batch processing with web search: {enable_web_search}")
+        
         try:
-            logger.info(f"Sending {len(file_paths)} files to AI processor")
-            results = self.ai_processor.process_batch(file_paths)
+            logger.info(f"Sending {len(file_paths)} files to AI processor with web search={enable_web_search}")
+            results = self.ai_processor.process_batch(file_paths, enable_web_search=enable_web_search)
             logger.info(f"Received {len(results)} results from AI processor")
             
             for job in jobs:
@@ -344,6 +348,18 @@ class BackendOrchestrator:
                 new_path=destination_file
             )
             logger.info(f"Job {job.job_id} marked as COMPLETED")
+            
+            # Auto-remove completed job from store after 1 second
+            # This gives the UI time to display completion status before removal
+            def remove_completed_job():
+                time.sleep(1)
+                if self.job_store.delete_job(job.job_id):
+                    logger.info(f"Job {job.job_id} automatically removed from store after completion")
+                else:
+                    logger.warning(f"Failed to auto-remove completed job {job.job_id}")
+            
+            removal_thread = threading.Thread(target=remove_completed_job, daemon=True)
+            removal_thread.start()
         
         except Exception as e:
             logger.error(f"Error organizing file for job {job.job_id}: {type(e).__name__}: {e}", exc_info=True)

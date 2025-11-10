@@ -33,7 +33,7 @@ class ConfigManager:
     def reload_config(self):
         with self._lock:
             try:
-                with open(self.config_path, 'r') as f:
+                with open(self.config_path, 'r', encoding='utf-8') as f:
                     new_config = json.load(f)
                     old_config = self._config.copy()
                     self._config = new_config
@@ -46,6 +46,9 @@ class ConfigManager:
                 self._config = self._get_default_config()
             except json.JSONDecodeError as e:
                 print(f"Error parsing config file: {e}")
+            except UnicodeDecodeError as e:
+                print(f"Unicode decode error reading config file: {e}. Using defaults.")
+                self._config = self._get_default_config()
 
     def _get_default_config(self) -> Dict[str, Any]:
         return {
@@ -84,7 +87,7 @@ class ConfigManager:
     def save(self):
         with self._lock:
             try:
-                with open(self.config_path, 'w') as f:
+                with open(self.config_path, 'w', encoding='utf-8') as f:
                     json.dump(self._config, f, indent=2)
                 return True
             except Exception as e:

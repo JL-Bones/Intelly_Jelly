@@ -60,6 +60,7 @@ Represents a single file processing job.
 | `priority` | bool | Whether job is high-priority |
 | `include_instructions` | bool | Include default instructions |
 | `include_filename` | bool | Include filename in prompt |
+| `enable_web_search` | bool | Enable web search for this job |
 
 #### Methods
 
@@ -68,6 +69,7 @@ Represents a single file processing job.
 - Generates unique UUID
 - Sets initial status to QUEUED_FOR_AI
 - Records creation timestamp
+- Sets `enable_web_search` to False by default
 
 **`to_dict() -> dict`**
 - Converts job to JSON-serializable dictionary
@@ -469,10 +471,62 @@ Main method for AI processing.
     "contents": [...],
     "generationConfig": {...},
     "tools": [{
-        "googleSearchRetrieval": {}
+        "google_search": {}
     }]
 }
 ```
+
+**Comprehensive Logging**:
+
+The AI Processor now includes detailed logging of all API interactions:
+
+**Request Logging**:
+```
+================================================================================
+GOOGLE AI API REQUEST
+================================================================================
+Model: gemini-2.0-flash-exp
+Web Search Enabled: true
+Prompt (first 500 chars): [truncated prompt preview]
+Full Prompt:
+[complete prompt text]
+Generation Config: {
+  "temperature": 0.7,
+  "topK": 1,
+  "topP": 1,
+  "maxOutputTokens": 2048
+}
+Tools: [
+  {
+    "google_search": {}
+  }
+]
+================================================================================
+```
+
+**Response Logging**:
+```
+================================================================================
+GOOGLE AI API RESPONSE
+================================================================================
+Status Code: 200
+Full Response:
+[complete JSON response with all metadata]
+================================================================================
+```
+
+**Web Search Tool Configuration**:
+- Uses `google_search` tool (not `google_search_retrieval`)
+- Automatic grounding when AI determines web search is needed
+- No additional configuration required in tool definition
+- Compatible with Gemini 1.5+ and 2.0+ models
+
+This comprehensive logging enables:
+- Debugging API issues
+- Monitoring web search activation
+- Analyzing response quality
+- Troubleshooting grounding behavior
+- Auditing AI interactions
 
 **Response Parsing**:
 - Extracts text from `candidates[0].content.parts[0].text`
@@ -485,7 +539,7 @@ Main method for AI processing.
 - `requests.exceptions.HTTPError`: API errors
 - `json.JSONDecodeError`: Invalid JSON response
 - `KeyError`: Unexpected response structure
-- All errors logged with full details
+- All errors logged with full details including response content
 
 **`get_available_models(provider: Optional[str] = None) -> List[str]`**
 
@@ -646,12 +700,15 @@ Processes a batch of jobs through AI.
 1. Validates batch not empty
 2. Updates all jobs to PROCESSING_AI
 3. Extracts relative paths
-4. Calls `ai_processor.process_batch()`
-5. Matches results to jobs
-6. Updates jobs with AI results:
+4. Gets `ENABLE_WEB_SEARCH` setting from config
+5. Calls `ai_processor.process_batch()` with web search flag
+6. Matches results to jobs
+7. Updates jobs with AI results:
    - Success: PENDING_COMPLETION with suggested_name and confidence
    - No result: FAILED with error message
-7. Catches exceptions and marks all jobs as FAILED on error
+8. Catches exceptions and marks all jobs as FAILED on error
+
+**Note**: Web search is applied to all batch jobs when enabled in global config.
 
 **`_priority_queue_worker()`**
 

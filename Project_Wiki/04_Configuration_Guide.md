@@ -46,9 +46,9 @@ The `config.json` file contains all non-secret application settings. It can be e
   "DEBOUNCE_SECONDS": 5,
   "AI_BATCH_SIZE": 10,
   "AI_PROVIDER": "google",
-  "AI_MODEL": "gemini-pro",
+  "AI_MODEL": "gemini-2.0-flash-exp",
   "DRY_RUN_MODE": false,
-  "ENABLE_WEB_SEARCH": false
+  "ENABLE_WEB_SEARCH": true
 }
 ```
 
@@ -142,13 +142,14 @@ The `config.json` file contains all non-secret application settings. It can be e
 **`AI_MODEL`**
 - **Type**: String
 - **Description**: Specific AI model to use
-- **Default**: `gemini-pro`
+- **Default**: `gemini-2.0-flash-exp` (or `gemini-pro` for older versions)
 - **Options** (Google):
-  - `gemini-pro`: General-purpose, fast
-  - `gemini-1.5-pro`: More capable, slower
-  - `gemini-1.5-flash`: Fastest, lighter
+  - `gemini-2.0-flash-exp`: Latest experimental model, fast with web search support
+  - `gemini-1.5-pro`: Highly capable, good for complex tasks
+  - `gemini-1.5-flash`: Very fast, lighter weight
+  - `gemini-pro`: General-purpose legacy model
   - Others available via API
-- **Example**: `gemini-1.5-flash`
+- **Example**: `gemini-2.0-flash-exp`
 - **Notes**:
   - Must be available for selected provider
   - Use `/api/models` endpoint to get valid options
@@ -182,19 +183,25 @@ The `config.json` file contains all non-secret application settings. It can be e
 **`ENABLE_WEB_SEARCH`**
 - **Type**: Boolean
 - **Description**: Allow AI to search the web for additional context
-- **Default**: `false`
+- **Default**: `true`
 - **Options**: `true` or `false`
 - **Example**: `true` to enable
 - **Notes**:
-  - Uses Google Search Retrieval tool
+  - Uses Google Search tool (`google_search`)
+  - Automatically activates when AI determines web search is needed
   - Provides AI with real-time web data
   - Useful for:
     - Obscure media
     - Recent releases
     - Missing metadata
-  - May increase processing time
+    - Verifying movie/TV show titles and years
+    - Finding episode names and season information
+  - Applied globally to all batch processing
+  - Can be overridden per-job via Re-AI dialog
+  - May increase processing time slightly
   - May increase API costs
   - Changes take effect on next AI call
+  - Requires compatible Gemini model (2.0+ recommended)
 
 ### Editing config.json
 
@@ -558,7 +565,23 @@ When config.json is missing or invalid, these defaults are used:
     "AI_PROVIDER": "google",
     "AI_MODEL": "gemini-pro",
     "DRY_RUN_MODE": False,
-    "ENABLE_WEB_SEARCH": False
+    "ENABLE_WEB_SEARCH": True  # Changed to True by default for better results
+}
+```
+
+**Current Production Defaults** (as of latest version):
+```json
+{
+    "DOWNLOADING_PATH": "./test_folders/downloading",
+    "COMPLETED_PATH": "./test_folders/completed",
+    "LIBRARY_PATH": "./test_folders/library",
+    "INSTRUCTIONS_FILE_PATH": "./instructions.md",
+    "DEBOUNCE_SECONDS": 5,
+    "AI_BATCH_SIZE": 10,
+    "AI_PROVIDER": "google",
+    "AI_MODEL": "gemini-2.0-flash-exp",
+    "DRY_RUN_MODE": false,
+    "ENABLE_WEB_SEARCH": true
 }
 ```
 
@@ -587,8 +610,19 @@ When config.json is missing or invalid, these defaults are used:
 {
     "DEBOUNCE_SECONDS": 5,
     "AI_BATCH_SIZE": 10,
-    "AI_MODEL": "gemini-1.5-pro",
+    "AI_MODEL": "gemini-2.0-flash-exp",
     "ENABLE_WEB_SEARCH": true
+}
+```
+
+**For Latest Features** (Recommended):
+```json
+{
+    "DEBOUNCE_SECONDS": 5,
+    "AI_BATCH_SIZE": 10,
+    "AI_MODEL": "gemini-2.0-flash-exp",
+    "ENABLE_WEB_SEARCH": true,
+    "DRY_RUN_MODE": false
 }
 ```
 

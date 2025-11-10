@@ -465,6 +465,50 @@ def test_full_workflow():
 
 ## Debugging
 
+### Comprehensive API Logging
+
+**New Feature**: The AI Processor now includes detailed request/response logging for all Google AI API calls.
+
+**What's Logged**:
+- Complete request payload (model, prompt, generation config, tools)
+- Full response JSON with all metadata
+- Web search activation status
+- Timestamps and processing details
+
+**Log Format**:
+```
+================================================================================
+GOOGLE AI API REQUEST
+================================================================================
+Model: gemini-2.0-flash-exp
+Web Search Enabled: true
+Prompt (first 500 chars): [preview]
+Full Prompt: [complete text]
+Generation Config: {...}
+Tools: [...]
+================================================================================
+
+[API call happens]
+
+================================================================================
+GOOGLE AI API RESPONSE
+================================================================================
+Status Code: 200
+Full Response: [complete JSON]
+================================================================================
+```
+
+**Benefits**:
+- Debug API issues easily
+- Verify web search activation
+- Analyze response quality
+- Audit AI interactions
+- Troubleshoot grounding behavior
+
+**Location**: All API logs appear in:
+- Console output (if enabled)
+- `intelly_jelly.log` file
+
 ### Enable Debug Logging
 
 ```python
@@ -474,6 +518,10 @@ logging.basicConfig(
     ...
 )
 ```
+
+**Debug vs Info Logging**:
+- `INFO`: High-level operations, API calls, job status changes
+- `DEBUG`: Detailed internal operations, variable values, decision points
 
 ### Common Issues & Solutions
 

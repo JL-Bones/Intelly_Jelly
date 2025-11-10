@@ -6,7 +6,7 @@
   "DEBOUNCE_SECONDS": 5,
   "AI_BATCH_SIZE": 10,
   "AI_PROVIDER": "google",
-  "AI_MODEL": "gemini-pro",
+  "AI_MODEL": "gemini-2.5-flash",
   "DRY_RUN_MODE": false,
-  "ENABLE_WEB_SEARCH": false
+  "ENABLE_WEB_SEARCH": true
 }
