@@ -43,11 +43,11 @@ class BackendOrchestrator:
         completed_path = self.config_manager.get('COMPLETED_PATH')
         debounce_seconds = self.config_manager.get('DEBOUNCE_SECONDS', 5)
         
-        downloading_handler = DownloadingFolderHandler(self._on_file_detected)
+        downloading_handler = DownloadingFolderHandler(self._on_file_detected, downloading_path)
         self.downloading_watcher = FileWatcher(downloading_path, downloading_handler)
         self.downloading_watcher.start()
         
-        completed_handler = CompletedFolderHandler(self._on_file_completed)
+        completed_handler = CompletedFolderHandler(self._on_file_completed, completed_path)
         self.completed_watcher = FileWatcher(completed_path, completed_handler)
         self.completed_watcher.start()
         
@@ -215,21 +215,30 @@ class BackendOrchestrator:
                 print(f"Error in priority queue worker: {e}")
                 time.sleep(1)
 
-    def _on_file_completed(self, file_path: str):
-        print(f"File appeared in completed folder: {file_path}")
+    def _on_file_completed(self, file_path: str, relative_path: str):
+        print(f"File appeared in completed folder: {relative_path}")
         
-        filename = os.path.basename(file_path)
-        
-        job = self.job_store.get_job_by_path(filename)
+        job = self.job_store.get_job_by_path(relative_path)
         
         if not job:
+            filename = os.path.basename(file_path)
+            job = self.job_store.get_job_by_path(filename)
+        
+        if not job:
+            for j in self.job_store.get_all_jobs():
+                if j.relative_path == relative_path:
+                    job = j
+                    break
+        
+        if not job:
+            filename = os.path.basename(file_path)
             for j in self.job_store.get_all_jobs():
                 if os.path.basename(j.original_path) == filename:
                     job = j
                     break
         
         if not job:
-            print(f"No matching job found for {filename}")
+            print(f"No matching job found for {relative_path}")
             return
         
         if job.status != JobStatus.PENDING_COMPLETION and job.status != JobStatus.MANUAL_EDIT:
@@ -248,8 +257,10 @@ class BackendOrchestrator:
             destination_dir = os.path.join(library_path, os.path.dirname(job.new_path))
             destination_file = os.path.join(library_path, job.new_path)
         else:
-            destination_dir = library_path
             destination_file = os.path.join(library_path, new_name)
+            destination_dir = os.path.dirname(destination_file)
+            if not destination_dir or destination_dir == library_path:
+                destination_dir = library_path
         
         try:
             os.makedirs(destination_dir, exist_ok=True)
@@ -286,12 +297,16 @@ class BackendOrchestrator:
         print("Configuration changed, updating watchers...")
         
         if old_config.get('DOWNLOADING_PATH') != new_config.get('DOWNLOADING_PATH'):
+            new_downloading_path = new_config.get('DOWNLOADING_PATH')
             if self.downloading_watcher:
-                self.downloading_watcher.restart(new_config.get('DOWNLOADING_PATH'))
+                self.downloading_watcher.handler.update_base_path(new_downloading_path)
+                self.downloading_watcher.restart(new_downloading_path)
         
         if old_config.get('COMPLETED_PATH') != new_config.get('COMPLETED_PATH'):
+            new_completed_path = new_config.get('COMPLETED_PATH')
             if self.completed_watcher:
-                self.completed_watcher.restart(new_config.get('COMPLETED_PATH'))
+                self.completed_watcher.handler.update_base_path(new_completed_path)
+                self.completed_watcher.restart(new_completed_path)
         
         if old_config.get('DEBOUNCE_SECONDS') != new_config.get('DEBOUNCE_SECONDS'):
             if self.debounced_processor:
