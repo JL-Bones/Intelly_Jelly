@@ -99,7 +99,9 @@ class BackendOrchestrator:
             return
         
         job = self.job_store.add_job(file_path, relative_path)
-        logger.info(f"Created job {job.job_id} for {relative_path} - added to queue")
+        # Apply default web search setting from config
+        job.enable_web_search = self.config_manager.get('ENABLE_WEB_SEARCH', False)
+        logger.info(f"Created job {job.job_id} for {relative_path} - added to queue (web_search={job.enable_web_search})")
         # Job is now in queue and will be processed by queue worker
 
     def _queue_worker(self):

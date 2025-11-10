@@ -12,9 +12,10 @@ You must return **only a single JSON array** as your response. Each object in th
 
 1.  **Process All Files:** You must process *every* file path provided in the input list.
 2.  **Find Missing Info:** If **any** critical or unknown information (like a movie's release year, a TV series' full name, episode names, an author's name, book title, etc.) is missing, you **must use web search** to find the correct information before producing the output.
-3.  **Strict Folder Structure (Media):** For **Movies, TV Shows, Music, and Books**, you must adhere *exactly* to the folder structures defined. Do not create any additional subfolders not explicitly listed in the rules (e.g., `Season XX`, `extras`, `Album`, etc.). If an original file is in a non-standard subfolder (like `Part 1` or `Danish Dub`), this extra information **must be appended to the filename** (e.g., `Movie Title (Year) - Part 1.mkv` or `Movie Title (Year) - Danish Dub.mkv`). This rule does **not** apply to 'Software' or 'Other'.
-4.  **Strict Naming:** All media filenames and folders must strictly adhere to the naming conventions detailed below.
-5.  **Valid Characters:** All suggested paths and filenames must be sanitized. Remove or replace any characters that are invalid in file systems (e.g., `?`, `*`, `<`, `>`, `|`, `"`). Colons (`:`) are a common invalid character in titles and **must** be replaced with a hyphen (`-`) or simply removed.
+3.  **Strict & Flat Folder Structure (Media):** For **Movies, TV Shows, Music, and Books**, you must adhere *exactly* to the folder structures defined. These structures represent the **maximum allowed directory depth**. Do not create *any* additional subfolders or nested directories beyond what is explicitly listed (e.g., `Season XX`, `extras`, `Album`, etc.). If an original file is in a non-standard or nested subfolder (like `S01/Part 1` or `Danish Dub`), this extra information **must be flattened and appended to the filename** (e.g., `Movie Title (Year) - Part 1.mkv` or `TV Show (Year) - S01E01 - Danish Dub.mkv`). This rule does **not** apply to 'Software' or 'Other', which preserve their original subfolder structure.
+4.  **Filter Non-Media Files:** If a file is part of a download (e.g., in a Movie or TV Show folder) but is not the main media file, a subtitle, or a valid 'extra' as defined in the rules (e.g., it's an "extra picture" `.jpg`, `.png`, `.nfo`, or `.txt` file), it **must be categorized as `Other`**. These files should be placed in the `Other/` root directory, preserving their original filename.
+5.  **Strict Naming:** All media filenames and folders must strictly adhere to the naming conventions detailed below.
+6.  **Valid Characters:** All suggested paths and filenames must be sanitized. Remove or replace any characters that are invalid in file systems (e.g., `?`, `*`, `<`, `>`, `|`, `"`). Colons (`:`) are a common invalid character in titles and **must** be replaced with a hyphen (`-`) or simply removed.
 
 -----
 
@@ -24,10 +25,10 @@ You must return **only a single JSON array** as your response. Each object in th
 
   * **Folder Structure:** `Movies/Movie Title (Year)/`
   * **File Naming:** `Movie Title (Year).ext` (e.g., `.mkv`, `.mp4`)
-  * **Subtitles/Artwork:** Place in the same folder, matching the movie's base filename (e.g., `Movie Title (Year).en.srt`).
+  * **Subtitles:** Place in the same folder, matching the movie's base filename (e.g., `Movie Title (Year).en.srt`).
   * **Extras:** Place in a subfolder within the movie's folder.
       * **Valid Subfolders:** `behind the scenes`, `deleted scenes`, `interviews`, `scenes`, `samples`, `shorts`, `featurettes`, `clips`, `other`, `extras`, `trailers`.
-      * **File Naming:** Use descriptive names for files inside these folders (e.g., `trailers/Main Trailer.mp4`).
+      * **File Naming:** Use descriptive names for files inside these folders (e.Example: `trailers/Main Trailer.mp4`).
 
 **Example JSON Output:**
 
@@ -188,7 +189,7 @@ You must return **only a single JSON array** as your response. Each object in th
 #### 📦 Other
 
   * **Folder Structure:** `Other/`
-  * **File Naming:** For any file not matching the categories above, place it in the "Other" folder, keeping its original filename and any subfolder structure it was in.
+  * **File Naming:** For any file not matching the categories above, place it in the "Other" folder, keeping its original filename and any subfolder structure it was in (unless it came from a media folder, per Rule \#4).
 
 **Example JSON Output:**
 
@@ -197,6 +198,16 @@ You must return **only a single JSON array** as your response. Each object in th
   {
     "original_path": "C:/Users/Me/Desktop/my_document.txt",
     "suggested_name": "Other/my_document.txt",
+    "confidence": 100
+  },
+  {
+    "original_path": "Downloads/Best Movie (2019)/fanart.jpg",
+    "suggested_name": "Other/fanart.jpg",
+    "confidence": 100
+  },
+  {
+    "original_path": "torrents/series.name.a.s01/series.nfo",
+    "suggested_name": "Other/series.nfo",
     "confidence": 100
   }
 ]
