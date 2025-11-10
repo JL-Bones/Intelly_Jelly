@@ -8,33 +8,45 @@ from pathlib import Path
 
 
 class DownloadingFolderHandler(FileSystemEventHandler):
-    def __init__(self, callback: Callable[[str, str], None]):
+    def __init__(self, callback: Callable[[str, str], None], base_path: str):
         self.callback = callback
+        self.base_path = base_path
+
+    def update_base_path(self, new_base_path: str):
+        self.base_path = new_base_path
 
     def on_created(self, event):
         if not event.is_directory:
             file_path = event.src_path
-            relative_path = os.path.basename(file_path)
+            relative_path = os.path.relpath(file_path, self.base_path)
             self.callback(file_path, relative_path)
 
     def on_moved(self, event):
         if not event.is_directory:
             file_path = event.dest_path
-            relative_path = os.path.basename(file_path)
+            relative_path = os.path.relpath(file_path, self.base_path)
             self.callback(file_path, relative_path)
 
 
 class CompletedFolderHandler(FileSystemEventHandler):
-    def __init__(self, callback: Callable[[str], None]):
+    def __init__(self, callback: Callable[[str, str], None], base_path: str):
         self.callback = callback
+        self.base_path = base_path
+
+    def update_base_path(self, new_base_path: str):
+        self.base_path = new_base_path
 
     def on_created(self, event):
         if not event.is_directory:
-            self.callback(event.src_path)
+            file_path = event.src_path
+            relative_path = os.path.relpath(file_path, self.base_path)
+            self.callback(file_path, relative_path)
 
     def on_moved(self, event):
         if not event.is_directory:
-            self.callback(event.dest_path)
+            file_path = event.dest_path
+            relative_path = os.path.relpath(file_path, self.base_path)
+            self.callback(file_path, relative_path)
 
 
 class FileWatcher:
@@ -51,10 +63,10 @@ class FileWatcher:
         os.makedirs(self.path, exist_ok=True)
         
         self.observer = Observer()
-        self.observer.schedule(self.handler, self.path, recursive=False)
+        self.observer.schedule(self.handler, self.path, recursive=True)
         self.observer.start()
         self._running = True
-        print(f"Started watching: {self.path}")
+        print(f"Started watching: {self.path} (recursive)")
 
     def stop(self):
         if self.observer and self._running:
