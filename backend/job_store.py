@@ -31,6 +31,8 @@ class Job:
         self.include_instructions: bool = True
         self.include_filename: bool = True
         self.enable_web_search: bool = False
+        self.retry_count: int = 0
+        self.max_retries: int = 3
 
     def to_dict(self) -> dict:
         return {
@@ -44,7 +46,9 @@ class Job:
             'error_message': self.error_message,
             'created_at': self.created_at.isoformat(),
             'updated_at': self.updated_at.isoformat(),
-            'priority': self.priority
+            'priority': self.priority,
+            'retry_count': self.retry_count,
+            'max_retries': self.max_retries
         }
 
     def update_status(self, status: JobStatus, **kwargs):
@@ -104,6 +108,12 @@ class JobStore:
         with self._lock:
             return [job for job in self._jobs.values() 
                    if job.priority and job.status == JobStatus.QUEUED_FOR_AI]
+    
+    def get_failed_jobs_for_retry(self) -> List[Job]:
+        """Get failed jobs that haven't exceeded max retries."""
+        with self._lock:
+            return [job for job in self._jobs.values() 
+                   if job.status == JobStatus.FAILED and job.retry_count < job.max_retries]
 
     def clear_completed_jobs(self, days: int = 7):
         with self._lock:

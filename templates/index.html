@@ -154,6 +154,14 @@
         .status-failed { background: #ff7675; color: #d63031; }
         .status-manual { background: #fdcb6e; color: #e17055; }
         
+        .error-message {
+            background: #fff5f5;
+            color: #c53030;
+            padding: 12px;
+            font-size: 13px;
+            border-left: 3px solid #fc8181;
+        }
+        
         .actions {
             display: flex;
             gap: 8px;
@@ -579,10 +587,6 @@
                 <label>New Name</label>
                 <input type="text" id="edit-name" placeholder="Enter new file name">
             </div>
-            <div class="form-group">
-                <label>New Path (optional)</label>
-                <input type="text" id="edit-path" placeholder="e.g., Movies/Action/file.mp4">
-            </div>
             <div class="form-actions">
                 <button class="btn-secondary" onclick="closeEditModal()">Cancel</button>
                 <button class="btn-primary" onclick="saveEdit()">Save</button>
@@ -690,10 +694,28 @@
                 `;
                 
                 jobs.forEach(job => {
+                    // Build retry info if applicable
+                    let retryInfo = '';
+                    if (job.status === 'FAILED' && job.retry_count !== undefined && job.max_retries !== undefined) {
+                        retryInfo = ` (Attempt ${job.retry_count}/${job.max_retries})`;
+                    }
+                    
+                    // Build error message if applicable
+                    let errorRow = '';
+                    if (job.status === 'FAILED' && job.error_message) {
+                        errorRow = `
+                        <tr>
+                            <td colspan="5" class="error-message">
+                                <strong>Error:</strong> ${job.error_message}
+                            </td>
+                        </tr>
+                        `;
+                    }
+                    
                     html += `
                         <tr>
                             <td>${job.relative_path}</td>
-                            <td><span class="status-badge ${getStatusClass(job.status)}">${job.status}</span></td>
+                            <td><span class="status-badge ${getStatusClass(job.status)}">${job.status}${retryInfo}</span></td>
                             <td>${job.ai_determined_name || '-'}</td>
                             <td>${job.confidence !== null ? job.confidence + '%' : '-'}</td>
                             <td>
@@ -703,6 +725,7 @@
                                 </div>
                             </td>
                         </tr>
+                        ${errorRow}
                     `;
                 });
                 
@@ -720,7 +743,6 @@
         function openEditModal(jobId, currentName) {
             currentJobId = jobId;
             document.getElementById('edit-name').value = currentName;
-            document.getElementById('edit-path').value = '';
             document.getElementById('edit-modal').classList.add('active');
         }
         
@@ -731,7 +753,6 @@
         
         async function saveEdit() {
             const newName = document.getElementById('edit-name').value;
-            const newPath = document.getElementById('edit-path').value;
             
             if (!newName) {
                 alert('Please enter a new name');
@@ -746,7 +767,7 @@
                     },
                     body: JSON.stringify({
                         new_name: newName,
-                        new_path: newPath || null
+                        new_path: null
                     })
                 });
                 

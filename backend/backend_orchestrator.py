@@ -124,6 +124,14 @@ class BackendOrchestrator:
                         job = non_priority_jobs[0]
                         logger.info(f"Processing queued job: {job.job_id} ({job.relative_path})")
                         self._process_single_job(job, is_priority=False)
+                    else:
+                        # If no queued jobs, check for failed jobs to retry
+                        # Only retry after all other jobs are complete
+                        failed_jobs = self.job_store.get_failed_jobs_for_retry()
+                        if failed_jobs:
+                            job = failed_jobs[0]
+                            logger.info(f"Retrying failed job: {job.job_id} ({job.relative_path}) - Attempt {job.retry_count + 1}/{job.max_retries}")
+                            self._process_single_job(job, is_priority=False, is_retry=True)
                 
                 time.sleep(1)
             
@@ -131,7 +139,7 @@ class BackendOrchestrator:
                 logger.error(f"Error in queue worker: {type(e).__name__}: {e}", exc_info=True)
                 time.sleep(1)
     
-    def _process_single_job(self, job, is_priority: bool = False):
+    def _process_single_job(self, job, is_priority: bool = False, is_retry: bool = False):
         """Process a single job through AI."""
         self.job_store.update_job(job.job_id, JobStatus.PROCESSING_AI)
         logger.debug(f"Updated job {job.job_id} to PROCESSING_AI status")
@@ -167,6 +175,12 @@ class BackendOrchestrator:
                 logger.info(f"Job {job.job_id} completed: {job.relative_path} -> {suggested_name} (confidence: {confidence}%)")
             else:
                 logger.warning(f"No AI result returned for job {job.job_id}")
+                # Increment retry count if this is a retry attempt
+                if is_retry:
+                    job.retry_count += 1
+                    if job.retry_count >= job.max_retries:
+                        logger.error(f"Job {job.job_id} exceeded max retries ({job.max_retries})")
+                
                 self.job_store.update_job(
                     job.job_id,
                     JobStatus.FAILED,
@@ -176,6 +190,12 @@ class BackendOrchestrator:
         
         except Exception as e:
             logger.error(f"Error processing job {job.job_id}: {type(e).__name__}: {e}", exc_info=True)
+            # Increment retry count if this is a retry attempt
+            if is_retry:
+                job.retry_count += 1
+                if job.retry_count >= job.max_retries:
+                    logger.error(f"Job {job.job_id} exceeded max retries ({job.max_retries})")
+            
             self.job_store.update_job(
                 job.job_id,
                 JobStatus.FAILED,
