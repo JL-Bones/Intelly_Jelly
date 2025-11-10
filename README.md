@@ -65,6 +65,17 @@ Intelly Jelly is a multi-threaded Python application that watches your download 
    ```bash
    python app.py
    ```
+   
+   **Optional: Run as a System Service**
+   
+   To run Intelly Jelly as a background service that starts automatically on boot:
+   ```bash
+   sudo ./service_manager.sh setup
+   sudo ./service_manager.sh enable
+   sudo ./service_manager.sh start
+   ```
+   
+   See [SERVICE_SETUP.md](SERVICE_SETUP.md) for detailed service management instructions.
 
 6. **Open your browser**
    
