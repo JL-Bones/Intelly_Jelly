@@ -58,6 +58,8 @@ class ConfigManager:
             "INSTRUCTIONS_FILE_PATH": "./instructions.md",
             "AI_PROVIDER": "google",
             "AI_MODEL": "gemini-2.0-flash-exp",
+            "OLLAMA_BASE_URL": "http://localhost:11434",
+            "OLLAMA_MODEL": "llama2",
             "DRY_RUN_MODE": False,
             "ENABLE_WEB_SEARCH": True,
             "AI_CALL_DELAY_SECONDS": 2

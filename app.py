@@ -148,6 +148,8 @@ def update_config():
         'INSTRUCTIONS_FILE_PATH',
         'AI_PROVIDER',
         'AI_MODEL',
+        'OLLAMA_BASE_URL',
+        'OLLAMA_MODEL',
         'DRY_RUN_MODE',
         'ENABLE_WEB_SEARCH',
         'AI_CALL_DELAY_SECONDS'

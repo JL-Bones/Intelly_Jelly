@@ -54,18 +54,29 @@ class AIProcessor:
         return results[0] if results else None
     
     def process_batch(self, file_paths: List[str], custom_prompt: Optional[str] = None, include_default: bool = True, include_filename: bool = True, enable_web_search: bool = False) -> List[Dict]:
-        """Process files using Google AI with optional web search."""
+        """Process files using configured AI provider (Google or Ollama)."""
         logger.info(f"Starting AI processing for {len(file_paths)} file(s)")
         logger.debug(f"Files to process: {file_paths}")
         logger.debug(f"Custom prompt: {custom_prompt}, Include default: {include_default}, Include filename: {include_filename}, Web search: {enable_web_search}")
         
+        # Get AI provider from config
+        provider = self.config_manager.get('AI_PROVIDER', 'google').lower()
+        logger.info(f"Using AI provider: {provider}")
+        
+        if provider == 'ollama':
+            return self._process_batch_ollama(file_paths, custom_prompt, include_default, include_filename)
+        else:
+            return self._process_batch_google(file_paths, custom_prompt, include_default, include_filename, enable_web_search)
+    
+    def _process_batch_google(self, file_paths: List[str], custom_prompt: Optional[str] = None, include_default: bool = True, include_filename: bool = True, enable_web_search: bool = False) -> List[Dict]:
+        """Process files using Google AI with optional web search."""
         api_key = self.config_manager.get_env('GOOGLE_API_KEY')
         if not api_key:
             logger.error("GOOGLE_API_KEY not found in environment")
             raise ValueError("GOOGLE_API_KEY not found in environment")
         
         model = self.config_manager.get('AI_MODEL', 'gemini-pro')
-        logger.info(f"Using AI model: {model}")
+        logger.info(f"Using Google AI model: {model}")
         prompt = self._prepare_batch_prompt(file_paths, custom_prompt, include_default, include_filename)
         
         if enable_web_search:
@@ -184,15 +195,117 @@ class AIProcessor:
             logger.error(f"Unexpected error during AI processing: {type(e).__name__}: {e}")
             raise
 
-    def get_available_models(self, provider: Optional[str] = None) -> List[str]:
-        """Get available Google AI models."""
-        logger.info("Fetching available Google AI models")
+    def _process_batch_ollama(self, file_paths: List[str], custom_prompt: Optional[str] = None, include_default: bool = True, include_filename: bool = True) -> List[Dict]:
+        """Process files using Ollama."""
+        base_url = self.config_manager.get('OLLAMA_BASE_URL', 'http://localhost:11434')
+        model = self.config_manager.get('OLLAMA_MODEL', 'llama2')
+        logger.info(f"Using Ollama at {base_url} with model: {model}")
+        
+        prompt = self._prepare_batch_prompt(file_paths, custom_prompt, include_default, include_filename)
+        
+        url = f"{base_url}/api/generate"
+        
+        payload = {
+            "model": model,
+            "prompt": prompt,
+            "stream": False,
+            "format": "json"
+        }
+        
         try:
-            models = self._get_google_models()
+            # Enforce delay between API calls to avoid rate limiting
+            delay_seconds = self.config_manager.get('AI_CALL_DELAY_SECONDS', 2)
+            time_since_last_call = time.time() - self.last_api_call_time
+            
+            if time_since_last_call < delay_seconds:
+                wait_time = delay_seconds - time_since_last_call
+                logger.info(f"Rate limit protection: waiting {wait_time:.2f} seconds before API call")
+                time.sleep(wait_time)
+            
+            logger.info(f"Sending request to Ollama API: {model}")
+            logger.debug(f"API URL: {url}")
+            
+            # Log full request payload
+            logger.info("=" * 80)
+            logger.info("OLLAMA API REQUEST")
+            logger.info("=" * 80)
+            logger.info(f"Base URL: {base_url}")
+            logger.info(f"Model: {model}")
+            logger.info(f"Prompt (first 500 chars): {prompt[:500]}...")
+            logger.info(f"Full Prompt:\n{prompt}")
+            logger.info("=" * 80)
+            
+            response = requests.post(url, json=payload, timeout=120)
+            self.last_api_call_time = time.time()  # Record time of API call
+            response.raise_for_status()
+            
+            logger.info(f"Received successful response from Ollama API (status: {response.status_code})")
+            
+            # Log full response
+            logger.info("=" * 80)
+            logger.info("OLLAMA API RESPONSE")
+            logger.info("=" * 80)
+            logger.info(f"Status Code: {response.status_code}")
+            logger.info(f"Full Response:\n{json.dumps(response.json(), indent=2)}")
+            logger.info("=" * 80)
+            
+            data = response.json()
+            text = data.get('response', '')
+            
+            logger.debug(f"Raw AI response length: {len(text)} characters")
+            
+            text = text.strip()
+            if text.startswith('```json'):
+                text = text[7:]
+            if text.startswith('```'):
+                text = text[3:]
+            if text.endswith('```'):
+                text = text[:-3]
+            text = text.strip()
+            
+            logger.debug("Parsing AI response as JSON")
+            result = json.loads(text)
+            
+            if isinstance(result, dict) and 'files' in result:
+                logger.info(f"AI processing completed successfully: {len(result['files'])} results returned")
+                return result['files']
+            elif isinstance(result, list):
+                logger.info(f"AI processing completed successfully: {len(result)} results returned")
+                return result
+            else:
+                logger.warning("AI response did not contain expected format, returning empty list")
+                return []
+                
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"Ollama API HTTP error: {e}, Status code: {response.status_code if 'response' in locals() else 'N/A'}")
+            logger.error(f"Response content: {response.text if 'response' in locals() else 'N/A'}")
+            raise
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse AI response as JSON: {e}")
+            logger.error(f"Raw response text: {text if 'text' in locals() else 'N/A'}")
+            raise
+        except KeyError as e:
+            logger.error(f"Unexpected response structure from Ollama API: {e}")
+            logger.error(f"Response data: {data if 'data' in locals() else 'N/A'}")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error during AI processing: {type(e).__name__}: {e}")
+            raise
+
+    def get_available_models(self, provider: Optional[str] = None) -> List[str]:
+        """Get available AI models for the configured provider."""
+        current_provider = provider or self.config_manager.get('AI_PROVIDER', 'google').lower()
+        logger.info(f"Fetching available models for provider: {current_provider}")
+        
+        try:
+            if current_provider == 'ollama':
+                models = self._get_ollama_models()
+            else:
+                models = self._get_google_models()
             logger.info(f"Successfully fetched {len(models)} available models")
             return models
         except Exception as e:
-            logger.error(f"Error fetching Google models: {type(e).__name__}: {e}")
+            logger.error(f"Error fetching models for {current_provider}: {type(e).__name__}: {e}")
             return []
 
     def _get_google_models(self) -> List[str]:
@@ -213,3 +326,22 @@ class AIProcessor:
         models = [m['name'].replace('models/', '') for m in data.get('models', [])]
         logger.debug(f"Found {len(models)} models: {models[:5]}..." if len(models) > 5 else f"Found {len(models)} models: {models}")
         return sorted(models)
+    
+    def _get_ollama_models(self) -> List[str]:
+        base_url = self.config_manager.get('OLLAMA_BASE_URL', 'http://localhost:11434')
+        url = f"{base_url}/api/tags"
+        logger.debug(f"Fetching Ollama models from: {url}")
+        
+        try:
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            
+            logger.debug(f"Ollama models API response status: {response.status_code}")
+            
+            data = response.json()
+            models = [m['name'] for m in data.get('models', [])]
+            logger.debug(f"Found {len(models)} Ollama models: {models[:5]}..." if len(models) > 5 else f"Found {len(models)} Ollama models: {models}")
+            return sorted(models)
+        except Exception as e:
+            logger.warning(f"Failed to fetch Ollama models: {e}")
+            return []
