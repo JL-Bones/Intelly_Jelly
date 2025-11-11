@@ -3,6 +3,7 @@ import shutil
 import threading
 import time
 import logging
+import requests
 from typing import List, Optional
 from pathlib import Path
 
@@ -293,6 +294,9 @@ class BackendOrchestrator:
             )
             logger.info(f"Job {job.job_id} marked as COMPLETED")
             
+            # Trigger Jellyfin refresh if enabled
+            self._trigger_jellyfin_refresh()
+            
             # Auto-remove completed job from store after 1 second
             # This gives the UI time to display completion status before removal
             def remove_completed_job():
@@ -378,3 +382,37 @@ class BackendOrchestrator:
         logger.info(f"Job {job_id} marked as QUEUED_FOR_AI with priority=True")
         
         return True
+
+    def _trigger_jellyfin_refresh(self):
+        """Trigger Jellyfin library refresh if enabled in config."""
+        try:
+            jellyfin_enabled = self.config_manager.get('JELLYFIN_REFRESH_ENABLED', False)
+            
+            if not jellyfin_enabled:
+                logger.debug("Jellyfin refresh is disabled, skipping")
+                return
+            
+            jellyfin_address = self.config_manager.get('JELLYFIN_ADDRESS', '')
+            jellyfin_api_key = self.config_manager.get('JELLYFIN_API_KEY', '')
+            
+            if not jellyfin_address or not jellyfin_api_key:
+                logger.warning("Jellyfin refresh is enabled but address or API key is missing")
+                return
+            
+            # Build the refresh URL
+            refresh_url = f"{jellyfin_address.rstrip('/')}/Library/Refresh?api_key={jellyfin_api_key}"
+            
+            logger.info(f"Triggering Jellyfin library refresh at {jellyfin_address}")
+            
+            # Make the POST request
+            response = requests.post(refresh_url, timeout=10)
+            
+            if response.status_code in [200, 204]:
+                logger.info("Jellyfin library refresh triggered successfully")
+            else:
+                logger.warning(f"Jellyfin refresh returned status code {response.status_code}: {response.text}")
+        
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error triggering Jellyfin refresh: {type(e).__name__}: {e}")
+        except Exception as e:
+            logger.error(f"Unexpected error triggering Jellyfin refresh: {type(e).__name__}: {e}", exc_info=True)

@@ -60,7 +60,10 @@ class ConfigManager:
             "AI_MODEL": "gemini-2.0-flash-exp",
             "DRY_RUN_MODE": False,
             "ENABLE_WEB_SEARCH": True,
-            "AI_CALL_DELAY_SECONDS": 2
+            "AI_CALL_DELAY_SECONDS": 2,
+            "JELLYFIN_REFRESH_ENABLED": False,
+            "JELLYFIN_ADDRESS": "http://localhost:8096",
+            "JELLYFIN_API_KEY": ""
         }
 
     def _start_watching(self):
