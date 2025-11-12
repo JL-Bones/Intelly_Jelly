@@ -151,9 +151,7 @@ def update_config():
         'DRY_RUN_MODE',
         'ENABLE_WEB_SEARCH',
         'AI_CALL_DELAY_SECONDS',
-        'JELLYFIN_REFRESH_ENABLED',
-        'JELLYFIN_ADDRESS',
-        'JELLYFIN_API_KEY'
+        'JELLYFIN_REFRESH_ENABLED'
     ]
     
     updates = {k: v for k, v in data.items() if k in allowed_fields}

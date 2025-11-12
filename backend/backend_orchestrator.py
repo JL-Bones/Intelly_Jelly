@@ -392,15 +392,17 @@ class BackendOrchestrator:
                 logger.debug("Jellyfin refresh is disabled, skipping")
                 return
             
-            jellyfin_address = self.config_manager.get('JELLYFIN_ADDRESS', '')
-            jellyfin_api_key = self.config_manager.get('JELLYFIN_API_KEY', '')
+            # Jellyfin address is hardcoded
+            jellyfin_address = "http://localhost:8096"
+            # Get API key from environment variable
+            jellyfin_api_key = self.config_manager.get_env('JELLYFIN_API_KEY', '')
             
-            if not jellyfin_address or not jellyfin_api_key:
-                logger.warning("Jellyfin refresh is enabled but address or API key is missing")
+            if not jellyfin_api_key:
+                logger.warning("Jellyfin refresh is enabled but API key is missing from environment variables")
                 return
             
             # Build the refresh URL
-            refresh_url = f"{jellyfin_address.rstrip('/')}/Library/Refresh?api_key={jellyfin_api_key}"
+            refresh_url = f"{jellyfin_address}/Library/Refresh?api_key={jellyfin_api_key}"
             
             logger.info(f"Triggering Jellyfin library refresh at {jellyfin_address}")
             

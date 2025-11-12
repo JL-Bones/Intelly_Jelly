@@ -61,9 +61,7 @@ class ConfigManager:
             "DRY_RUN_MODE": False,
             "ENABLE_WEB_SEARCH": True,
             "AI_CALL_DELAY_SECONDS": 2,
-            "JELLYFIN_REFRESH_ENABLED": False,
-            "JELLYFIN_ADDRESS": "http://localhost:8096",
-            "JELLYFIN_API_KEY": ""
+            "JELLYFIN_REFRESH_ENABLED": False
         }
 
     def _start_watching(self):
