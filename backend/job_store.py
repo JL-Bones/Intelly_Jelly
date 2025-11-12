@@ -35,6 +35,8 @@ class Job:
         self.max_retries: int = 3
         self._missing_since: Optional[float] = None
         self.completed_file_path: Optional[str] = None
+        self.group_id: Optional[str] = None  # Links files with same base name
+        self.is_group_primary: bool = False  # First file in a group is primary
 
     def to_dict(self) -> dict:
         return {
@@ -127,4 +129,19 @@ class JobStore:
             ]
             for job_id in to_delete:
                 del self._jobs[job_id]
+
+    def get_jobs_by_group(self, group_id: str) -> List[Job]:
+        """Get all jobs that belong to the same group."""
+        with self._lock:
+            return [job for job in self._jobs.values() if job.group_id == group_id]
+    
+    def find_job_by_base_name(self, base_name: str) -> Optional[Job]:
+        """Find existing job with same base name (without extension)."""
+        with self._lock:
+            import os
+            for job in self._jobs.values():
+                job_base_name = os.path.splitext(os.path.basename(job.relative_path))[0]
+                if job_base_name == base_name:
+                    return job
+            return None
             return len(to_delete)

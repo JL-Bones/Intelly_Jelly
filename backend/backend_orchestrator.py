@@ -4,6 +4,7 @@ import threading
 import time
 import logging
 import requests
+import uuid
 from typing import List, Optional
 from pathlib import Path
 
@@ -99,10 +100,30 @@ class BackendOrchestrator:
             logger.warning(f"Job already exists for {relative_path} (job_id: {existing_job.job_id})")
             return
         
+        # Check if there's an existing job with the same base name (for grouping)
+        base_name = os.path.splitext(os.path.basename(relative_path))[0]
+        existing_group_job = self.job_store.find_job_by_base_name(base_name)
+        
         job = self.job_store.add_job(file_path, relative_path)
         # Apply default web search setting from config
         job.enable_web_search = self.config_manager.get('ENABLE_WEB_SEARCH', False)
-        logger.info(f"Created job {job.job_id} for {relative_path} - added to queue (web_search={job.enable_web_search})")
+        
+        if existing_group_job and existing_group_job.group_id:
+            # Add this job to the existing group
+            job.group_id = existing_group_job.group_id
+            logger.info(f"Created job {job.job_id} for {relative_path} - added to group {job.group_id}")
+        elif existing_group_job:
+            # Create a new group for both files
+            group_id = str(uuid.uuid4())
+            existing_group_job.group_id = group_id
+            existing_group_job.is_group_primary = True
+            job.group_id = group_id
+            logger.info(f"Created job {job.job_id} for {relative_path} - created group {group_id} with {existing_group_job.job_id}")
+        else:
+            # Single file, mark as primary
+            job.is_group_primary = True
+            logger.info(f"Created job {job.job_id} for {relative_path} - added to queue (web_search={job.enable_web_search})")
+        
         # Job is now in queue and will be processed by queue worker
 
     def _queue_worker(self):
@@ -122,14 +143,34 @@ class BackendOrchestrator:
                     logger.info(f"Processing priority job: {job.job_id} ({job.relative_path})")
                     self._process_single_job(job, is_priority=True)
                 else:
-                    # Process regular queued jobs one at a time
+                    # Process regular queued jobs one at a time (or groups together)
                     queued_jobs = self.job_store.get_jobs_by_status(JobStatus.QUEUED_FOR_AI)
                     non_priority_jobs = [j for j in queued_jobs if not j.priority]
                     
                     if non_priority_jobs:
                         job = non_priority_jobs[0]
-                        logger.info(f"Processing queued job: {job.job_id} ({job.relative_path})")
-                        self._process_single_job(job, is_priority=False)
+                        
+                        # Check if this job is part of a group
+                        if job.group_id and job.is_group_primary:
+                            # Get all jobs in this group
+                            group_jobs = self.job_store.get_jobs_by_group(job.group_id)
+                            # Filter to only queued jobs
+                            group_queued = [j for j in group_jobs if j.status == JobStatus.QUEUED_FOR_AI]
+                            
+                            if len(group_queued) == len(group_jobs):
+                                # All files in group are ready, process together
+                                logger.info(f"Processing grouped jobs: {len(group_jobs)} files with same base name")
+                                self._process_grouped_jobs(group_jobs, is_priority=False)
+                            else:
+                                # Wait for all files in group to be queued
+                                logger.debug(f"Waiting for all files in group {job.group_id} to be ready ({len(group_queued)}/{len(group_jobs)})")
+                        elif job.is_group_primary or not job.group_id:
+                            # Single file or primary file without group
+                            logger.info(f"Processing queued job: {job.job_id} ({job.relative_path})")
+                            self._process_single_job(job, is_priority=False)
+                        else:
+                            # Secondary file in group, skip (will be processed with primary)
+                            logger.debug(f"Skipping secondary file {job.job_id}, waiting for primary file in group")
                     else:
                         # If no queued jobs, check for failed jobs to retry
                         # Only retry after all other jobs are complete
@@ -144,6 +185,72 @@ class BackendOrchestrator:
             except Exception as e:
                 logger.error(f"Error in queue worker: {type(e).__name__}: {e}", exc_info=True)
                 time.sleep(1)
+    
+    def _process_grouped_jobs(self, jobs: List, is_priority: bool = False):
+        """Process a group of jobs with the same base name together through AI."""
+        # Mark all jobs as processing
+        for job in jobs:
+            self.job_store.update_job(job.job_id, JobStatus.PROCESSING_AI)
+        
+        logger.info(f"Processing group of {len(jobs)} files together")
+        
+        try:
+            # Use settings from primary job
+            primary_job = next((j for j in jobs if j.is_group_primary), jobs[0])
+            custom_prompt = getattr(primary_job, 'custom_prompt', None)
+            include_instructions = getattr(primary_job, 'include_instructions', True)
+            include_filename = getattr(primary_job, 'include_filename', True)
+            enable_web_search = getattr(primary_job, 'enable_web_search', self.config_manager.get('ENABLE_WEB_SEARCH', False))
+            
+            # Process all files together
+            file_paths = [job.relative_path for job in jobs]
+            results = self.ai_processor.process_batch(
+                file_paths,
+                custom_prompt=custom_prompt,
+                include_default=include_instructions,
+                include_filename=include_filename,
+                enable_web_search=enable_web_search
+            )
+            
+            if results and len(results) == len(jobs):
+                # Apply results to each job
+                for job, result in zip(jobs, results):
+                    suggested_name = result.get('suggested_name')
+                    confidence = result.get('confidence', 0)
+                    self.job_store.update_job(
+                        job.job_id,
+                        JobStatus.PENDING_COMPLETION,
+                        ai_determined_name=suggested_name,
+                        confidence=confidence,
+                        priority=False if is_priority else job.priority
+                    )
+                    logger.info(f"Job {job.job_id} completed: {job.relative_path} -> {suggested_name} (confidence: {confidence}%)")
+                    
+                    # If file is already waiting in completed folder, organize it now
+                    if job.completed_file_path and os.path.exists(job.completed_file_path):
+                        logger.info(f"Job {job.job_id} file already in completed folder, organizing now")
+                        self._organize_file(job, job.completed_file_path)
+            else:
+                logger.warning(f"AI results mismatch for grouped jobs: expected {len(jobs)}, got {len(results) if results else 0}")
+                # Mark all as failed
+                for job in jobs:
+                    self.job_store.update_job(
+                        job.job_id,
+                        JobStatus.FAILED,
+                        error_message="AI result mismatch for grouped files",
+                        priority=False if is_priority else job.priority
+                    )
+        
+        except Exception as e:
+            logger.error(f"Error processing grouped jobs: {type(e).__name__}: {e}", exc_info=True)
+            # Mark all jobs as failed
+            for job in jobs:
+                self.job_store.update_job(
+                    job.job_id,
+                    JobStatus.FAILED,
+                    error_message=str(e),
+                    priority=False if is_priority else job.priority
+                )
     
     def _process_single_job(self, job, is_priority: bool = False, is_retry: bool = False):
         """Process a single job through AI."""
