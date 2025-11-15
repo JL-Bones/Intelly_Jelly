@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - Intelly Jelly</title>
+    <link rel="stylesheet" href="/static/themes.css">
     <style>
         * {
             margin: 0;
@@ -24,19 +25,30 @@
         }
         
         header {
-            background: white;
             padding: 20px 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
         h1 {
-            color: #667eea;
             font-size: 28px;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         
         .nav-links {
@@ -45,15 +57,10 @@
         }
         
         .nav-links a {
-            color: #667eea;
             text-decoration: none;
             padding: 10px 20px;
             border-radius: 5px;
             transition: background 0.3s;
-        }
-        
-        .nav-links a:hover {
-            background: #f0f0f0;
         }
         
         .settings-container {
@@ -227,6 +234,12 @@
                 text-align: center;
             }
             
+            .header-left,
+            .header-right {
+                width: 100%;
+                flex-direction: column;
+            }
+            
             h1 {
                 font-size: 22px;
             }
@@ -365,12 +378,27 @@
 <body>
     <div class="container">
         <header>
-            <h1>🍇 Intelly Jelly</h1>
-            <div class="nav-links">
-                <a href="/">Downloads</a>
-                <a href="/library">Library</a>
-                <a href="/settings">Settings</a>
-                <a href="/logs">Logs</a>
+            <div class="header-left">
+                <h1>🍇 Intelly Jelly</h1>
+            </div>
+            <div class="header-right">
+                <div class="nav-links">
+                    <a href="/">Downloads</a>
+                    <a href="/library">Library</a>
+                    <a href="/settings">Settings</a>
+                    <a href="/logs">Logs</a>
+                </div>
+                <div class="theme-selector">
+                    <select id="theme-select" onchange="changeTheme(this.value)">
+                        <option value="dark">Dark</option>
+                        <option value="light">Light</option>
+                        <option value="ocean">Ocean</option>
+                        <option value="forest">Forest</option>
+                        <option value="sunset">Sunset</option>
+                        <option value="midnight">Midnight</option>
+                        <option value="cherry">Cherry Blossom</option>
+                    </select>
+                </div>
             </div>
         </header>
         
@@ -462,6 +490,21 @@
     </div>
     
     <script>
+        // Theme management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('intelly-jelly-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('theme-select').value = savedTheme;
+        }
+        
+        function changeTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('intelly-jelly-theme', theme);
+        }
+        
+        // Initialize theme on page load
+        initTheme();
+        
         let currentConfig = {};
         
         async function loadConfig() {
