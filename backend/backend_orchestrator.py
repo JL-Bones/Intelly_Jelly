@@ -599,11 +599,11 @@ class BackendOrchestrator:
             
             # Jellyfin address is hardcoded
             jellyfin_address = "http://localhost:8096"
-            # Get API key from environment variable
-            jellyfin_api_key = self.config_manager.get_env('JELLYFIN_API_KEY', '')
+            # Get API key from configuration
+            jellyfin_api_key = self.config_manager.get('JELLYFIN_API_KEY', '')
             
             if not jellyfin_api_key:
-                logger.warning("Jellyfin refresh is enabled but API key is missing from environment variables")
+                logger.warning("Jellyfin refresh is enabled but API key is not configured in Settings")
                 return
             
             # Build the refresh URL

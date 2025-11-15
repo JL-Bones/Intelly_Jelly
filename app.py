@@ -331,7 +331,9 @@ def update_config():
         'AI_CALL_DELAY_SECONDS',
         'JELLYFIN_REFRESH_ENABLED',
         'APP_PASSWORD',
-        'ADMIN_PASSWORD'
+        'ADMIN_PASSWORD',
+        'GOOGLE_API_KEY',
+        'JELLYFIN_API_KEY'
     ]
     
     updates = {k: v for k, v in data.items() if k in allowed_fields}

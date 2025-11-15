@@ -200,6 +200,23 @@
             border: 1px solid var(--error-border);
         }
         
+        .delete-key-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+        
+        .delete-key-btn:hover {
+            background: #c0392b;
+        }
+        
         .loading {
             display: inline-block;
             width: 16px;
@@ -425,6 +442,28 @@
                 </div>
                 
                 <div class="settings-section">
+                    <h3>API Keys</h3>
+                    
+                    <div class="form-group">
+                        <label for="google-api-key">Google API Key</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="google-api-key" name="GOOGLE_API_KEY" placeholder="Enter Google API Key" style="flex: 1;">
+                            <button type="button" id="delete-google-key" class="delete-key-btn" style="display: none;" onclick="deleteApiKey('google')">Delete</button>
+                        </div>
+                        <small>Required for AI-powered file organization</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="jellyfin-api-key">Jellyfin API Key</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="jellyfin-api-key" name="JELLYFIN_API_KEY" placeholder="Enter Jellyfin API Key" style="flex: 1;">
+                            <button type="button" id="delete-jellyfin-key" class="delete-key-btn" style="display: none;" onclick="deleteApiKey('jellyfin')">Delete</button>
+                        </div>
+                        <small>Required for automatic Jellyfin library refresh</small>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
                     <h3>AI Configuration</h3>
                     <p style="font-size: 14px; margin-bottom: 20px; color: var(--text-secondary);">Jobs are processed one at a time in queue order for optimal reliability.</p>
                     
@@ -463,7 +502,7 @@
                             <input type="checkbox" id="jellyfin-refresh" name="JELLYFIN_REFRESH_ENABLED">
                             <label for="jellyfin-refresh">Refresh Jellyfin when items are completed</label>
                         </div>
-                        <small>Automatically trigger Jellyfin library refresh after organizing files (Server: http://localhost:8096, API key from .env file)</small>
+                        <small>Automatically trigger Jellyfin library refresh after organizing files (Server: http://localhost:8096, API key configured above)</small>
                     </div>
                 </div>
                 
@@ -533,6 +572,21 @@
         
         let currentConfig = {};
         
+        function maskApiKey(key) {
+            if (!key || key.length <= 4) return key;
+            return '•'.repeat(key.length - 4) + key.slice(-4);
+        }
+        
+        function deleteApiKey(keyType) {
+            if (keyType === 'google') {
+                document.getElementById('google-api-key').value = '';
+                document.getElementById('delete-google-key').style.display = 'none';
+            } else if (keyType === 'jellyfin') {
+                document.getElementById('jellyfin-api-key').value = '';
+                document.getElementById('delete-jellyfin-key').style.display = 'none';
+            }
+        }
+        
         async function loadConfig() {
             try {
                 const response = await fetch('/api/config');
@@ -546,6 +600,22 @@
                 document.getElementById('jellyfin-refresh').checked = currentConfig.JELLYFIN_REFRESH_ENABLED || false;
                 document.getElementById('app-password').value = currentConfig.APP_PASSWORD || '';
                 document.getElementById('admin-password').value = currentConfig.ADMIN_PASSWORD || '';
+                
+                // Handle API keys with masking
+                const googleKey = currentConfig.GOOGLE_API_KEY || '';
+                const jellyfinKey = currentConfig.JELLYFIN_API_KEY || '';
+                
+                if (googleKey) {
+                    document.getElementById('google-api-key').value = maskApiKey(googleKey);
+                    document.getElementById('google-api-key').dataset.fullKey = googleKey;
+                    document.getElementById('delete-google-key').style.display = 'inline-block';
+                }
+                
+                if (jellyfinKey) {
+                    document.getElementById('jellyfin-api-key').value = maskApiKey(jellyfinKey);
+                    document.getElementById('jellyfin-api-key').dataset.fullKey = jellyfinKey;
+                    document.getElementById('delete-jellyfin-key').style.display = 'inline-block';
+                }
                 
                 await loadModels();
             } catch (error) {
@@ -619,6 +689,18 @@
                     config[key] = document.getElementById(elementId).checked;
                 } else if (key === 'AI_CALL_DELAY_SECONDS') {
                     config[key] = parseFloat(value) || 2;
+                } else if (key === 'GOOGLE_API_KEY') {
+                    // Use full key if it exists (not changed), otherwise use new value
+                    const googleInput = document.getElementById('google-api-key');
+                    config[key] = googleInput.dataset.fullKey && value === maskApiKey(googleInput.dataset.fullKey) 
+                        ? googleInput.dataset.fullKey 
+                        : value;
+                } else if (key === 'JELLYFIN_API_KEY') {
+                    // Use full key if it exists (not changed), otherwise use new value
+                    const jellyfinInput = document.getElementById('jellyfin-api-key');
+                    config[key] = jellyfinInput.dataset.fullKey && value === maskApiKey(jellyfinInput.dataset.fullKey) 
+                        ? jellyfinInput.dataset.fullKey 
+                        : value;
                 } else {
                     config[key] = value;
                 }
