@@ -564,6 +564,80 @@ def re_ai_library_file():
         return jsonify({'error': 'Internal server error'}), 500
 
 
+@app.route('/api/instruction-prompt', methods=['GET'])
+@require_app_password
+@require_admin_password
+def get_instruction_prompt():
+    """Get the current instruction prompt (custom if exists, otherwise base)"""
+    logger.info("API: Get instruction prompt request")
+    try:
+        custom_path = 'instruction_prompt_custom.md'
+        base_path = 'instruction_prompt.md'
+        
+        # Check if custom instructions exist
+        if os.path.exists(custom_path):
+            with open(custom_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                return jsonify({'content': content, 'is_custom': True})
+        else:
+            with open(base_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+                return jsonify({'content': content, 'is_custom': False})
+    except Exception as e:
+        logger.error(f"Error reading instruction prompt: {type(e).__name__}: {e}", exc_info=True)
+        return jsonify({'error': 'Failed to read instruction prompt'}), 500
+
+
+@app.route('/api/instruction-prompt', methods=['POST'])
+@require_app_password
+@require_admin_password
+def save_instruction_prompt():
+    """Save custom instruction prompt"""
+    logger.info("API: Save instruction prompt request")
+    try:
+        data = request.json
+        content = data.get('content')
+        
+        if content is None:
+            return jsonify({'error': 'content is required'}), 400
+        
+        custom_path = 'instruction_prompt_custom.md'
+        
+        # Save to custom file
+        with open(custom_path, 'w', encoding='utf-8') as f:
+            f.write(content)
+        
+        logger.info(f"Custom instruction prompt saved to {custom_path}")
+        return jsonify({'success': True, 'message': 'Instructions saved successfully'})
+    except Exception as e:
+        logger.error(f"Error saving instruction prompt: {type(e).__name__}: {e}", exc_info=True)
+        return jsonify({'error': 'Failed to save instruction prompt'}), 500
+
+
+@app.route('/api/instruction-prompt/reset', methods=['POST'])
+@require_app_password
+@require_admin_password
+def reset_instruction_prompt():
+    """Reset to base instruction prompt by deleting custom file"""
+    logger.info("API: Reset instruction prompt request")
+    try:
+        custom_path = 'instruction_prompt_custom.md'
+        
+        if os.path.exists(custom_path):
+            os.remove(custom_path)
+            logger.info(f"Deleted custom instruction prompt: {custom_path}")
+        
+        # Return the base instructions
+        base_path = 'instruction_prompt.md'
+        with open(base_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        return jsonify({'success': True, 'message': 'Instructions reset to default', 'content': content})
+    except Exception as e:
+        logger.error(f"Error resetting instruction prompt: {type(e).__name__}: {e}", exc_info=True)
+        return jsonify({'error': 'Failed to reset instruction prompt'}), 500
+
+
 if __name__ == '__main__':
     os.makedirs('./test_folders/downloading', exist_ok=True)
     os.makedirs('./test_folders/completed', exist_ok=True)

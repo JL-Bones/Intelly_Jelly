@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import requests
 import time
 from typing import List, Dict, Optional
@@ -13,7 +14,11 @@ class AIProcessor:
         self.last_api_call_time = 0
 
     def _get_instructions(self) -> str:
-        instructions_path = './instruction_prompt.md'
+        # Check for custom instructions first, fall back to base instructions
+        custom_path = './instruction_prompt_custom.md'
+        base_path = './instruction_prompt.md'
+        instructions_path = custom_path if os.path.exists(custom_path) else base_path
+        
         try:
             with open(instructions_path, 'r', encoding='utf-8') as f:
                 content = f.read()
