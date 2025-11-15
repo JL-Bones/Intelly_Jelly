@@ -24,6 +24,7 @@ config.json
 .installed.cfg
 *.egg
 file_movements.json
+instruction_prompt_custom.md
 
 # Authentication tokens
 tokens.json
