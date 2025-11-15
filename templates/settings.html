@@ -931,14 +931,16 @@
             }
         }
         
-        // Restore section states from localStorage
+        // Restore section states from localStorage (default to collapsed)
         function restoreSectionStates() {
             const sections = ['folder-paths', 'ai-config', 'jellyfin', 'security'];
             sections.forEach(sectionId => {
                 const state = localStorage.getItem('section-' + sectionId);
-                if (state === 'collapsed') {
-                    const content = document.getElementById(sectionId + '-content');
-                    const toggle = document.getElementById(sectionId + '-toggle');
+                const content = document.getElementById(sectionId + '-content');
+                const toggle = document.getElementById(sectionId + '-toggle');
+                
+                // Default to collapsed if no state is saved, or if state is 'collapsed'
+                if (state === null || state === 'collapsed') {
                     content.classList.add('collapsed');
                     toggle.classList.add('collapsed');
                 }
@@ -968,17 +970,6 @@
             const googleKeyGroup = document.getElementById('google-api-key-group');
             const openaiKeyGroup = document.getElementById('openai-api-key-group');
             
-            // Save current model for the current provider before switching
-            const currentProvider = document.getElementById('ai-provider').value;
-            const currentModel = document.getElementById('ai-model').value;
-            const customModel = document.getElementById('custom-model').value;
-            
-            if (currentModel === 'custom' && customModel) {
-                providerModels[currentProvider] = customModel;
-            } else if (currentModel) {
-                providerModels[currentProvider] = currentModel;
-            }
-            
             // Switch API key display
             if (provider === 'openai') {
                 googleKeyGroup.style.display = 'none';
@@ -992,6 +983,18 @@
             loadModels();
         }
         
+        function saveCurrentProviderModel() {
+            const currentProvider = document.getElementById('ai-provider').value;
+            const currentModel = document.getElementById('ai-model').value;
+            const customModel = document.getElementById('custom-model').value;
+            
+            if (currentModel === 'custom' && customModel) {
+                providerModels[currentProvider] = customModel;
+            } else if (currentModel) {
+                providerModels[currentProvider] = currentModel;
+            }
+        }
+        
         function handleModelChange() {
             const modelSelect = document.getElementById('ai-model');
             const customModelGroup = document.getElementById('custom-model-group');
@@ -1003,6 +1006,9 @@
                 customModelGroup.style.display = 'none';
                 customModelInput.value = '';
             }
+            
+            // Save the current model selection
+            saveCurrentProviderModel();
         }
         
         async function loadConfig() {
