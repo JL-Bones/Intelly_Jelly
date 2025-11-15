@@ -200,6 +200,23 @@
             border: 1px solid var(--error-border);
         }
         
+        .delete-key-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+        
+        .delete-key-btn:hover {
+            background: #c0392b;
+        }
+        
         .loading {
             display: inline-block;
             width: 16px;
@@ -378,14 +395,14 @@
     <div class="container">
         <header>
             <div class="header-left">
-                <h1>🍇 Intelly Jelly</h1>
+                <a href="/" style="text-decoration: none; color: inherit;"><h1>🍇 Intelly Jelly</h1></a>
             </div>
             <div class="header-right">
                 <div class="nav-links">
                     <a href="/">Downloads</a>
                     <a href="/library">Library</a>
-                    <a href="/settings">Settings</a>
                     <a href="/logs">Logs</a>
+                    <a href="/settings">Settings</a>
                 </div>
                 <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
                     <span id="theme-icon">🌙</span>
@@ -425,6 +442,28 @@
                 </div>
                 
                 <div class="settings-section">
+                    <h3>API Keys</h3>
+                    
+                    <div class="form-group">
+                        <label for="google-api-key">Google API Key</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="google-api-key" name="GOOGLE_API_KEY" placeholder="Enter Google API Key" style="flex: 1;">
+                            <button type="button" id="delete-google-key" class="delete-key-btn" style="display: none;" onclick="deleteApiKey('google')">Delete</button>
+                        </div>
+                        <small>Required for AI-powered file organization</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="jellyfin-api-key">Jellyfin API Key</label>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="text" id="jellyfin-api-key" name="JELLYFIN_API_KEY" placeholder="Enter Jellyfin API Key" style="flex: 1;">
+                            <button type="button" id="delete-jellyfin-key" class="delete-key-btn" style="display: none;" onclick="deleteApiKey('jellyfin')">Delete</button>
+                        </div>
+                        <small>Required for automatic Jellyfin library refresh</small>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
                     <h3>AI Configuration</h3>
                     <p style="font-size: 14px; margin-bottom: 20px; color: var(--text-secondary);">Jobs are processed one at a time in queue order for optimal reliability.</p>
                     
@@ -448,14 +487,6 @@
                     
                     <div class="form-group">
                         <div class="checkbox-group">
-                            <input type="checkbox" id="dry-run" name="DRY_RUN_MODE">
-                            <label for="dry-run">Dry Run Mode</label>
-                        </div>
-                        <small>When enabled, files won't actually be moved (for testing)</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <div class="checkbox-group">
                             <input type="checkbox" id="web-search" name="ENABLE_WEB_SEARCH">
                             <label for="web-search">Enable Web Search</label>
                         </div>
@@ -471,7 +502,23 @@
                             <input type="checkbox" id="jellyfin-refresh" name="JELLYFIN_REFRESH_ENABLED">
                             <label for="jellyfin-refresh">Refresh Jellyfin when items are completed</label>
                         </div>
-                        <small>Automatically trigger Jellyfin library refresh after organizing files (Server: http://localhost:8096, API key from .env file)</small>
+                        <small>Automatically trigger Jellyfin library refresh after organizing files (Server: http://localhost:8096, API key configured above)</small>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Security</h3>
+                    
+                    <div class="form-group">
+                        <label for="app-password">Application Password</label>
+                        <input type="password" id="app-password" name="APP_PASSWORD" placeholder="Leave blank for no password">
+                        <small>Require password to access the entire application (leave blank to disable)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="admin-password">Admin Password</label>
+                        <input type="password" id="admin-password" name="ADMIN_PASSWORD" placeholder="Leave blank for no password">
+                        <small>Require password to access settings page (leave blank to disable)</small>
                     </div>
                 </div>
                 
@@ -481,9 +528,28 @@
     </div>
     
     <script>
+        // Cookie utility functions
+        function setCookie(name, value, days = 365) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/;SameSite=Lax";
+        }
+        
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+        
         // Theme management
         function initTheme() {
-            const savedTheme = localStorage.getItem('intelly-jelly-theme') || 'dark';
+            const savedTheme = getCookie('intelly-jelly-theme') || 'dark';
             document.documentElement.setAttribute('data-theme', savedTheme);
             updateThemeIcon(savedTheme);
         }
@@ -492,7 +558,7 @@
             const currentTheme = document.documentElement.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('intelly-jelly-theme', newTheme);
+            setCookie('intelly-jelly-theme', newTheme);
             updateThemeIcon(newTheme);
         }
         
@@ -506,6 +572,21 @@
         
         let currentConfig = {};
         
+        function maskApiKey(key) {
+            if (!key || key.length <= 4) return key;
+            return '•'.repeat(key.length - 4) + key.slice(-4);
+        }
+        
+        function deleteApiKey(keyType) {
+            if (keyType === 'google') {
+                document.getElementById('google-api-key').value = '';
+                document.getElementById('delete-google-key').style.display = 'none';
+            } else if (keyType === 'jellyfin') {
+                document.getElementById('jellyfin-api-key').value = '';
+                document.getElementById('delete-jellyfin-key').style.display = 'none';
+            }
+        }
+        
         async function loadConfig() {
             try {
                 const response = await fetch('/api/config');
@@ -515,9 +596,26 @@
                 document.getElementById('completed-path').value = currentConfig.COMPLETED_PATH || '';
                 document.getElementById('library-path').value = currentConfig.LIBRARY_PATH || '';
                 document.getElementById('ai-delay').value = currentConfig.AI_CALL_DELAY_SECONDS || 2;
-                document.getElementById('dry-run').checked = currentConfig.DRY_RUN_MODE || false;
                 document.getElementById('web-search').checked = currentConfig.ENABLE_WEB_SEARCH || false;
                 document.getElementById('jellyfin-refresh').checked = currentConfig.JELLYFIN_REFRESH_ENABLED || false;
+                document.getElementById('app-password').value = currentConfig.APP_PASSWORD || '';
+                document.getElementById('admin-password').value = currentConfig.ADMIN_PASSWORD || '';
+                
+                // Handle API keys with masking
+                const googleKey = currentConfig.GOOGLE_API_KEY || '';
+                const jellyfinKey = currentConfig.JELLYFIN_API_KEY || '';
+                
+                if (googleKey) {
+                    document.getElementById('google-api-key').value = maskApiKey(googleKey);
+                    document.getElementById('google-api-key').dataset.fullKey = googleKey;
+                    document.getElementById('delete-google-key').style.display = 'inline-block';
+                }
+                
+                if (jellyfinKey) {
+                    document.getElementById('jellyfin-api-key').value = maskApiKey(jellyfinKey);
+                    document.getElementById('jellyfin-api-key').dataset.fullKey = jellyfinKey;
+                    document.getElementById('delete-jellyfin-key').style.display = 'inline-block';
+                }
                 
                 await loadModels();
             } catch (error) {
@@ -586,12 +684,23 @@
             const config = {};
             
             for (const [key, value] of formData.entries()) {
-                if (key === 'DRY_RUN_MODE' || key === 'ENABLE_WEB_SEARCH' || key === 'JELLYFIN_REFRESH_ENABLED') {
-                    const elementId = key === 'DRY_RUN_MODE' ? 'dry-run' : 
-                                     key === 'ENABLE_WEB_SEARCH' ? 'web-search' : 'jellyfin-refresh';
+                if (key === 'ENABLE_WEB_SEARCH' || key === 'JELLYFIN_REFRESH_ENABLED') {
+                    const elementId = key === 'ENABLE_WEB_SEARCH' ? 'web-search' : 'jellyfin-refresh';
                     config[key] = document.getElementById(elementId).checked;
                 } else if (key === 'AI_CALL_DELAY_SECONDS') {
                     config[key] = parseFloat(value) || 2;
+                } else if (key === 'GOOGLE_API_KEY') {
+                    // Use full key if it exists (not changed), otherwise use new value
+                    const googleInput = document.getElementById('google-api-key');
+                    config[key] = googleInput.dataset.fullKey && value === maskApiKey(googleInput.dataset.fullKey) 
+                        ? googleInput.dataset.fullKey 
+                        : value;
+                } else if (key === 'JELLYFIN_API_KEY') {
+                    // Use full key if it exists (not changed), otherwise use new value
+                    const jellyfinInput = document.getElementById('jellyfin-api-key');
+                    config[key] = jellyfinInput.dataset.fullKey && value === maskApiKey(jellyfinInput.dataset.fullKey) 
+                        ? jellyfinInput.dataset.fullKey 
+                        : value;
                 } else {
                     config[key] = value;
                 }

@@ -2,24 +2,33 @@
 
 **An intelligent, automated media organizer powered by AI**
 
-Intelly Jelly is a multi-threaded Python application that watches your download folders and uses Google's Gemini AI to intelligently organize, rename, and categorize your media files. With a beautiful web interface and powerful automation, it takes the hassle out of managing your media library.
+Intelly Jelly is a multi-threaded Python application that watches your download folders and uses Google's Gemini AI to intelligently organize, rename, and categorize your media files. With a beautiful web interface, powerful automation, and secure authentication, it takes the hassle out of managing your media library.
 
 ---
 
 ## ✨ Features
 
+### Core Features
 - **🤖 AI-Powered Organization**: Uses Google Gemini AI to intelligently determine proper file names and folder structures
 - **👀 Real-Time Monitoring**: Automatically watches folders for new files and processes them in batches
 - **🌐 Web Search Integration**: Optional Google Search grounding for accurate information about movies, TV shows, music, and more
-- **🎨 Beautiful Web UI**: Clean, responsive interface for monitoring jobs and managing settings
+- **🎨 Beautiful Web UI**: Clean, responsive interface with dark/light theme support
 - **⚡ Priority Queue System**: Manually re-process files with custom prompts and immediate priority
-- **🔧 Dynamic Configuration**: Update settings without restarting the application
+- **🔧 Dynamic Configuration**: Update all settings through the web interface - no file editing required
 - **🧵 Multi-Threaded**: Efficient concurrent processing with thread-safe operations
 - **📊 Real-Time Stats**: Live job status updates and processing statistics
 - **🎯 Flexible Rules**: Customizable organization rules for Movies, TV Shows, Music, Books, and more
-- **🏃 Dry Run Mode**: Test organization without actually moving files
-- **📝 Comprehensive Logging**: Detailed logging of all operations and API interactions
+
+### Security & Authentication
+- **🔐 Password Protection**: Optional app-wide and admin password protection
+- **� Remember Me**: Secure token-based authentication with 30-day sessions
+- **🍪 Browser Cookies**: Theme and authentication preferences persist across sessions
+
+### Additional Features
+- **�📝 Comprehensive Logging**: Detailed logging of all operations and file movements
 - **🍇 Jellyfin Integration**: Optional automatic library refresh when files are organized
+- **🔑 Web-Based API Management**: Configure Google and Jellyfin API keys directly in settings
+- **🌙 Theme Persistence**: Dark/light mode preference saved in browser cookies
 
 ---
 
@@ -44,40 +53,22 @@ Intelly Jelly is a multi-threaded Python application that watches your download 
    pip install -r requirements.txt
    ```
 
-3. **Set up your environment**
-   
-   Copy `.env.example` to `.env` and add your API keys:
-   ```bash
-   cp .env.example .env
-   ```
-   
-   Edit `.env` with your keys:
-   ```env
-   # Google AI API Key
-   GOOGLE_API_KEY=your_google_api_key_here
-   
-   # Jellyfin Configuration (optional)
-   JELLYFIN_API_KEY=your_jellyfin_api_key_here
-   ```
-
-4. **Configure your paths**
-   
-   Edit `config.json` to set your folder paths:
-   ```json
-   {
-     "DOWNLOADING_PATH": "./test_folders/downloading",
-     "COMPLETED_PATH": "./test_folders/completed",
-     "LIBRARY_PATH": "./test_folders/library",
-     "AI_MODEL": "gemini-2.0-flash-exp",
-     "ENABLE_WEB_SEARCH": true,
-     "JELLYFIN_REFRESH_ENABLED": false
-   }
-   ```
-
-5. **Run the application**
+3. **Run the application**
    ```bash
    python app.py
    ```
+
+4. **Configure through web interface**
+   
+   Open your browser to `http://localhost:5000` and:
+   - Navigate to **Settings** to configure:
+     - **API Keys**: Add your Google Gemini API key ([Get one here](https://makersuite.google.com/app/apikey))
+     - **Folder Paths**: Set your downloading, completed, and library paths
+     - **AI Settings**: Choose your preferred AI model and settings
+     - **Security**: Optionally set application and admin passwords
+     - **Jellyfin**: Configure Jellyfin integration if desired
+
+That's it! All configuration is done through the user-friendly web interface.
 
 6. **Open your browser**
    
@@ -120,7 +111,9 @@ library/
 
 ## 🎮 Using the Web Interface
 
-### Dashboard (`/`)
+Access the application at `http://localhost:5000`
+
+### 🏠 Downloads (`/`)
 
 - **Job Queue**: View all active jobs and their status
 - **Statistics**: Real-time counts of queued, processing, pending, completed, and failed jobs
@@ -128,43 +121,71 @@ library/
   - ✏️ **Edit**: Manually edit the AI-determined name and path
   - 🔄 **Re-AI**: Re-process with custom prompts and options
   - 🗑️ **Delete**: Remove completed jobs from the list
+- **Auto-Refresh**: Live updates every 2 seconds
 
-### Settings (`/settings`)
+### 📚 Library (`/library`)
 
-Configure all aspects of the application:
+- Browse organized files in your library
+- Search and filter functionality
+- Sort by name, date, or size
+- Delete files directly from the interface
+- Pagination for large libraries
 
+### 📋 Logs (`/logs`)
+
+- View file movement history
+- See source and destination paths
+- Track success/failure status
+- Filter and search logs
+- Clear log history
+
+### ⚙️ Settings (`/settings`)
+
+Configure everything through the web interface:
+
+- **API Keys**: Securely add Google and Jellyfin API keys (masked display)
 - **Folder Paths**: Set downloading, completed, and library directories
-- **AI Settings**: Select Google Gemini model, enable web search, adjust processing delay
-- **Processing**: Configure dry run mode for testing
-- **Jellyfin Integration**: Enable automatic library refresh after file organization
+- **AI Configuration**: Select model, adjust processing delay
+- **Advanced Options**: Toggle web search
+- **Jellyfin Integration**: Enable automatic library refresh
+- **Security**: Set optional app and admin passwords
 
 ---
 
-## ⚙️ Configuration Options
+## ⚙️ Configuration
 
-### `config.json`
+All configuration is managed through the **Settings** page in the web interface at `http://localhost:5000/settings`.
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| `DOWNLOADING_PATH` | Folder to watch for new files | `./test_folders/downloading` |
-| `COMPLETED_PATH` | Folder where downloaded files appear | `./test_folders/completed` |
-| `LIBRARY_PATH` | Destination for organized files | `./test_folders/library` |
-| `AI_MODEL` | Google Gemini model to use | `gemini-2.0-flash-exp` |
-| `AI_CALL_DELAY_SECONDS` | Delay between AI API calls | `2` |
-| `DRY_RUN_MODE` | Test without moving files | `false` |
-| `ENABLE_WEB_SEARCH` | Enable Google Search grounding | `true` |
-| `JELLYFIN_REFRESH_ENABLED` | Auto-refresh Jellyfin library | `false` |
+### Configuration Options
 
-**Note**: AI instructions are stored in `instruction_prompt.md` (not configurable).
+| Category | Setting | Description | Default |
+|----------|---------|-------------|---------|
+| **API Keys** | Google API Key | Your Google Gemini API key ([Get one here](https://makersuite.google.com/app/apikey)) | None |
+| | Jellyfin API Key | Your Jellyfin API key (optional) | None |
+| **Folder Paths** | Downloading Path | Folder to monitor for new files | `./test_folders/downloading` |
+| | Completed Path | Folder where completed downloads appear | `./test_folders/completed` |
+| | Library Path | Destination for organized files | `./test_folders/library` |
+| **AI Settings** | AI Model | Google Gemini model to use | `gemini-2.0-flash-exp` |
+| | API Call Delay | Delay between AI API calls (seconds) | `2` |
+| **Advanced** | Web Search | Enable Google Search grounding | Enabled |
+| **Jellyfin** | Refresh Enabled | Auto-refresh Jellyfin library | Disabled |
+| **Security** | App Password | Password for entire application (optional) | None |
+| | Admin Password | Password for settings access (optional) | None |
 
-### Environment Variables (`.env`)
+### Security Features
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `GOOGLE_API_KEY` | Your Google Gemini API key | Yes |
-| `JELLYFIN_API_KEY` | Your Jellyfin API key | If using Jellyfin integration |
+- **API Key Masking**: Saved API keys display only the last 4 digits for security
+- **Password Protection**: 
+  - App Password: Protects access to the entire application
+  - Admin Password: Protects access to settings page
+  - Both optional - leave blank to disable
+- **Remember Me**: Secure 30-day authentication tokens stored in browser cookies
 
-**Note**: Jellyfin server address is hardcoded to `http://localhost:8096`.
+**Notes**: 
+- All settings are stored in `config.json` and update in real-time
+- AI instructions are stored in `instruction_prompt.md` (not configurable through UI)
+- Jellyfin server address is `http://localhost:8096`
+- Configuration changes apply immediately without restart
 
 ---
 
@@ -277,18 +298,33 @@ For in-depth technical documentation, see the [Project Wiki](Project_Wiki/):
 ### Jobs Stuck in "Processing"
 
 - Check `intelly_jelly.log` for error messages
-- Verify your Google API key is valid
+- Verify your Google API key is configured correctly in Settings
 - Ensure the AI model supports your request
+- Check API key has not expired
 
 ### Files Not Moving
 
 - Confirm files are in the `COMPLETED_PATH` folder
 - Check file permissions
-- Enable dry run mode to test without moving files
+- Verify `LIBRARY_PATH` is accessible and writable
+
+### API Key Issues
+
+- Ensure Google API key is entered in Settings → API Keys
+- Keys are masked after saving - only last 4 digits shown
+- Delete and re-add key if having issues
+- Verify key has Gemini API access enabled
+
+### Authentication Problems
+
+- Clear browser cookies if having login issues
+- Check password is set correctly in Settings
+- Remember Me tokens expire after 30 days
+- Tokens invalidate when password changes
 
 ### Web Search Not Working
 
-- Ensure `ENABLE_WEB_SEARCH` is `true` in config
+- Ensure `ENABLE_WEB_SEARCH` is enabled in Settings → Advanced Options
 - Verify you're using a compatible Gemini model (2.0+ recommended)
 - Check API logs for any grounding errors
 

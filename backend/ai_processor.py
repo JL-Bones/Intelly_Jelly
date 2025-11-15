@@ -59,10 +59,10 @@ class AIProcessor:
         logger.debug(f"Files to process: {file_paths}")
         logger.debug(f"Custom prompt: {custom_prompt}, Include default: {include_default}, Include filename: {include_filename}, Web search: {enable_web_search}")
         
-        api_key = self.config_manager.get_env('GOOGLE_API_KEY')
+        api_key = self.config_manager.get('GOOGLE_API_KEY', '')
         if not api_key:
-            logger.error("GOOGLE_API_KEY not found in environment")
-            raise ValueError("GOOGLE_API_KEY not found in environment")
+            logger.error("GOOGLE_API_KEY not found in configuration")
+            raise ValueError("GOOGLE_API_KEY not set. Please configure it in Settings.")
         
         model = self.config_manager.get('AI_MODEL', 'gemini-pro')
         logger.info(f"Using AI model: {model}")
@@ -196,9 +196,9 @@ class AIProcessor:
             return []
 
     def _get_google_models(self) -> List[str]:
-        api_key = self.config_manager.get_env('GOOGLE_API_KEY')
+        api_key = self.config_manager.get('GOOGLE_API_KEY', '')
         if not api_key:
-            logger.warning("GOOGLE_API_KEY not found, cannot fetch models")
+            logger.warning("GOOGLE_API_KEY not found in configuration, cannot fetch models")
             return []
         
         url = f"https://generativelanguage.googleapis.com/v1beta/models?key={api_key}"

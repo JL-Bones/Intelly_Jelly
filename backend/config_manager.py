@@ -4,7 +4,6 @@ import threading
 from typing import Any, Dict, Optional
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-from dotenv import load_dotenv
 
 
 class ConfigChangeHandler(FileSystemEventHandler):
@@ -17,15 +16,12 @@ class ConfigChangeHandler(FileSystemEventHandler):
 
 
 class ConfigManager:
-    def __init__(self, config_path: str = 'config.json', env_path: str = '.env'):
+    def __init__(self, config_path: str = 'config.json'):
         self.config_path = config_path
-        self.env_path = env_path
         self._config: Dict[str, Any] = {}
         self._lock = threading.RLock()
         self._observers = []
         self._change_callbacks = []
-        
-        load_dotenv(self.env_path)
         
         self.reload_config()
         self._start_watching()
@@ -56,10 +52,13 @@ class ConfigManager:
             "COMPLETED_PATH": "./test_folders/completed",
             "LIBRARY_PATH": "./test_folders/library",
             "AI_MODEL": "gemini-2.0-flash-exp",
-            "DRY_RUN_MODE": False,
             "ENABLE_WEB_SEARCH": True,
             "AI_CALL_DELAY_SECONDS": 2,
-            "JELLYFIN_REFRESH_ENABLED": False
+            "JELLYFIN_REFRESH_ENABLED": False,
+            "APP_PASSWORD": "",
+            "ADMIN_PASSWORD": "",
+            "GOOGLE_API_KEY": "",
+            "JELLYFIN_API_KEY": ""
         }
 
     def _start_watching(self):
@@ -98,7 +97,8 @@ class ConfigManager:
             return self.save()
 
     def get_env(self, key: str, default: Optional[str] = None) -> Optional[str]:
-        return os.getenv(key, default)
+        # Deprecated: Use get() instead for all configuration values
+        return self.get(key, default)
 
     def register_change_callback(self, callback):
         self._change_callbacks.append(callback)
