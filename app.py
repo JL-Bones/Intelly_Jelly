@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask import Flask, render_template, request, jsonify, send_from_directory, session, redirect, url_for
 import threading
 import os
 import logging
+from functools import wraps
 
 from backend.config_manager import ConfigManager
 from backend.job_store import JobStore, JobStatus
@@ -21,6 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
+app.secret_key = os.urandom(24)  # Generate a secret key for sessions
 
 config_manager = ConfigManager()
 job_store = JobStore()
@@ -35,22 +37,88 @@ def start_backend():
     orchestrator.start()
 
 
+def require_app_password(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        app_password = config_manager.get('APP_PASSWORD', '')
+        if app_password and not session.get('app_authenticated'):
+            return redirect(url_for('app_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def require_admin_password(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        admin_password = config_manager.get('ADMIN_PASSWORD', '')
+        if admin_password and not session.get('admin_authenticated'):
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+@app.route('/app-login', methods=['GET', 'POST'])
+def app_login():
+    app_password = config_manager.get('APP_PASSWORD', '')
+    if not app_password:
+        session['app_authenticated'] = True
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        data = request.json
+        if data and data.get('password') == app_password:
+            session['app_authenticated'] = True
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'error': 'Invalid password'}), 401
+    
+    return render_template('app_login.html')
+
+
+@app.route('/admin-login', methods=['GET', 'POST'])
+def admin_login():
+    admin_password = config_manager.get('ADMIN_PASSWORD', '')
+    if not admin_password:
+        session['admin_authenticated'] = True
+        return redirect(url_for('settings'))
+    
+    if request.method == 'POST':
+        data = request.json
+        if data and data.get('password') == admin_password:
+            session['admin_authenticated'] = True
+            return jsonify({'success': True})
+        return jsonify({'success': False, 'error': 'Invalid password'}), 401
+    
+    return render_template('admin_login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.pop('app_authenticated', None)
+    session.pop('admin_authenticated', None)
+    return redirect(url_for('index'))
+
+
 @app.route('/')
+@require_app_password
 def index():
     return render_template('index.html')
 
 
 @app.route('/settings')
+@require_app_password
+@require_admin_password
 def settings():
     return render_template('settings.html')
 
 
 @app.route('/logs')
+@require_app_password
 def logs():
     return render_template('logs.html')
 
 
 @app.route('/library')
+@require_app_password
 def library():
     return render_template('library.html')
 
@@ -150,6 +218,8 @@ def get_config():
 
 
 @app.route('/api/config', methods=['POST'])
+@require_app_password
+@require_admin_password
 def update_config():
     data = request.json
     
@@ -158,10 +228,11 @@ def update_config():
         'COMPLETED_PATH',
         'LIBRARY_PATH',
         'AI_MODEL',
-        'DRY_RUN_MODE',
         'ENABLE_WEB_SEARCH',
         'AI_CALL_DELAY_SECONDS',
-        'JELLYFIN_REFRESH_ENABLED'
+        'JELLYFIN_REFRESH_ENABLED',
+        'APP_PASSWORD',
+        'ADMIN_PASSWORD'
     ]
     
     updates = {k: v for k, v in data.items() if k in allowed_fields}

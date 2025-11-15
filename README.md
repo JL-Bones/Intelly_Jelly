@@ -17,7 +17,6 @@ Intelly Jelly is a multi-threaded Python application that watches your download 
 - **🧵 Multi-Threaded**: Efficient concurrent processing with thread-safe operations
 - **📊 Real-Time Stats**: Live job status updates and processing statistics
 - **🎯 Flexible Rules**: Customizable organization rules for Movies, TV Shows, Music, Books, and more
-- **🏃 Dry Run Mode**: Test organization without actually moving files
 - **📝 Comprehensive Logging**: Detailed logging of all operations and API interactions
 - **🍇 Jellyfin Integration**: Optional automatic library refresh when files are organized
 
@@ -135,7 +134,6 @@ Configure all aspects of the application:
 
 - **Folder Paths**: Set downloading, completed, and library directories
 - **AI Settings**: Select Google Gemini model, enable web search, adjust processing delay
-- **Processing**: Configure dry run mode for testing
 - **Jellyfin Integration**: Enable automatic library refresh after file organization
 
 ---
@@ -151,7 +149,6 @@ Configure all aspects of the application:
 | `LIBRARY_PATH` | Destination for organized files | `./test_folders/library` |
 | `AI_MODEL` | Google Gemini model to use | `gemini-2.0-flash-exp` |
 | `AI_CALL_DELAY_SECONDS` | Delay between AI API calls | `2` |
-| `DRY_RUN_MODE` | Test without moving files | `false` |
 | `ENABLE_WEB_SEARCH` | Enable Google Search grounding | `true` |
 | `JELLYFIN_REFRESH_ENABLED` | Auto-refresh Jellyfin library | `false` |
 
@@ -284,7 +281,6 @@ For in-depth technical documentation, see the [Project Wiki](Project_Wiki/):
 
 - Confirm files are in the `COMPLETED_PATH` folder
 - Check file permissions
-- Enable dry run mode to test without moving files
 
 ### Web Search Not Working
 

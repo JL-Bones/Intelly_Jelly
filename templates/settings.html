@@ -378,14 +378,14 @@
     <div class="container">
         <header>
             <div class="header-left">
-                <h1>🍇 Intelly Jelly</h1>
+                <a href="/" style="text-decoration: none; color: inherit;"><h1>🍇 Intelly Jelly</h1></a>
             </div>
             <div class="header-right">
                 <div class="nav-links">
                     <a href="/">Downloads</a>
                     <a href="/library">Library</a>
-                    <a href="/settings">Settings</a>
                     <a href="/logs">Logs</a>
+                    <a href="/settings">Settings</a>
                 </div>
                 <button class="theme-toggle" id="theme-toggle" onclick="toggleTheme()">
                     <span id="theme-icon">🌙</span>
@@ -448,14 +448,6 @@
                     
                     <div class="form-group">
                         <div class="checkbox-group">
-                            <input type="checkbox" id="dry-run" name="DRY_RUN_MODE">
-                            <label for="dry-run">Dry Run Mode</label>
-                        </div>
-                        <small>When enabled, files won't actually be moved (for testing)</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <div class="checkbox-group">
                             <input type="checkbox" id="web-search" name="ENABLE_WEB_SEARCH">
                             <label for="web-search">Enable Web Search</label>
                         </div>
@@ -472,6 +464,22 @@
                             <label for="jellyfin-refresh">Refresh Jellyfin when items are completed</label>
                         </div>
                         <small>Automatically trigger Jellyfin library refresh after organizing files (Server: http://localhost:8096, API key from .env file)</small>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Security</h3>
+                    
+                    <div class="form-group">
+                        <label for="app-password">Application Password</label>
+                        <input type="password" id="app-password" name="APP_PASSWORD" placeholder="Leave blank for no password">
+                        <small>Require password to access the entire application (leave blank to disable)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="admin-password">Admin Password</label>
+                        <input type="password" id="admin-password" name="ADMIN_PASSWORD" placeholder="Leave blank for no password">
+                        <small>Require password to access settings page (leave blank to disable)</small>
                     </div>
                 </div>
                 
@@ -515,9 +523,10 @@
                 document.getElementById('completed-path').value = currentConfig.COMPLETED_PATH || '';
                 document.getElementById('library-path').value = currentConfig.LIBRARY_PATH || '';
                 document.getElementById('ai-delay').value = currentConfig.AI_CALL_DELAY_SECONDS || 2;
-                document.getElementById('dry-run').checked = currentConfig.DRY_RUN_MODE || false;
                 document.getElementById('web-search').checked = currentConfig.ENABLE_WEB_SEARCH || false;
                 document.getElementById('jellyfin-refresh').checked = currentConfig.JELLYFIN_REFRESH_ENABLED || false;
+                document.getElementById('app-password').value = currentConfig.APP_PASSWORD || '';
+                document.getElementById('admin-password').value = currentConfig.ADMIN_PASSWORD || '';
                 
                 await loadModels();
             } catch (error) {
@@ -586,9 +595,8 @@
             const config = {};
             
             for (const [key, value] of formData.entries()) {
-                if (key === 'DRY_RUN_MODE' || key === 'ENABLE_WEB_SEARCH' || key === 'JELLYFIN_REFRESH_ENABLED') {
-                    const elementId = key === 'DRY_RUN_MODE' ? 'dry-run' : 
-                                     key === 'ENABLE_WEB_SEARCH' ? 'web-search' : 'jellyfin-refresh';
+                if (key === 'ENABLE_WEB_SEARCH' || key === 'JELLYFIN_REFRESH_ENABLED') {
+                    const elementId = key === 'ENABLE_WEB_SEARCH' ? 'web-search' : 'jellyfin-refresh';
                     config[key] = document.getElementById(elementId).checked;
                 } else if (key === 'AI_CALL_DELAY_SECONDS') {
                     config[key] = parseFloat(value) || 2;

@@ -374,10 +374,9 @@ class BackendOrchestrator:
             return
         
         library_path = self.config_manager.get('LIBRARY_PATH')
-        dry_run = self.config_manager.get('DRY_RUN_MODE', False)
         
         logger.info(f"Organizing file for job {job.job_id}: {file_path}")
-        logger.debug(f"Library path: {library_path}, Dry run: {dry_run}")
+        logger.debug(f"Library path: {library_path}")
         
         new_name = job.ai_determined_name or os.path.basename(file_path)
         logger.debug(f"Target name: {new_name}")
@@ -409,20 +408,10 @@ class BackendOrchestrator:
                     counter += 1
                 logger.info(f"Using unique filename: {new_name}")
             
-            if dry_run:
-                logger.info(f"DRY RUN: Would move {file_path} -> {destination_file}")
-                # Log the dry run movement
-                self.file_movement_logger.log_movement(
-                    source_path=file_path,
-                    destination_path=destination_file,
-                    job_id=job.job_id,
-                    status='dry_run'
-                )
-            else:
-                shutil.move(file_path, destination_file)
-                logger.info(f"Successfully moved file: {file_path} -> {destination_file}")
-                # Log the successful movement
-                self.file_movement_logger.log_movement(
+            shutil.move(file_path, destination_file)
+            logger.info(f"Successfully moved file: {file_path} -> {destination_file}")
+            # Log the successful movement
+            self.file_movement_logger.log_movement(
                     source_path=file_path,
                     destination_path=destination_file,
                     job_id=job.job_id,

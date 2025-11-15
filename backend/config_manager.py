@@ -56,10 +56,11 @@ class ConfigManager:
             "COMPLETED_PATH": "./test_folders/completed",
             "LIBRARY_PATH": "./test_folders/library",
             "AI_MODEL": "gemini-2.0-flash-exp",
-            "DRY_RUN_MODE": False,
             "ENABLE_WEB_SEARCH": True,
             "AI_CALL_DELAY_SECONDS": 2,
-            "JELLYFIN_REFRESH_ENABLED": False
+            "JELLYFIN_REFRESH_ENABLED": False,
+            "APP_PASSWORD": "",
+            "ADMIN_PASSWORD": ""
         }
 
     def _start_watching(self):
