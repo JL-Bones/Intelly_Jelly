@@ -61,13 +61,14 @@ You must return **only a single JSON array** as your response. Each object in th
 
 #### 📺 TV Shows
 
-  * **Folder Structure:** `TV Shows/Series Name (Country Tag) (Year)/Season XX/` (e.g., `Season 01`, `Season 02`)
-  * **Country Tags:** If a TV show has multiple versions from different countries (e.g., The Office, Ghosts, Shameless), you **must** include the country tag in parentheses before the year. Examples: `The Office (US) (2005)`, `Ghosts (UK) (2019)`, `Shameless (US) (2011)`. If there is only one version of the show, no country tag is needed.
-  * **File Naming:** The format is `Series Name (Country Tag) (Year) - SXXEYY - Episode Name.ext`.
+  * **Folder Structure:** `TV Shows/Series Name (Year)/Season XX/` (e.g., `Season 01`, `Season 02`)
+  * **Year:** Always use the year the TV show **first aired**. This is the year of the series premiere, not the year of a specific episode or season.
+  * **Country Tags:** Only for "The Office" and "Ghosts", you **must** include the country tag (US) or (UK) in parentheses before the year. Examples: `The Office (US) (2005)`, `The Office (UK) (2001)`, `Ghosts (UK) (2019)`, `Ghosts (US) (2021)`. Do **not** add country tags to any other TV shows.
+  * **File Naming:** The format is `Series Name (Year) - SXXEYY - Episode Name.ext`.
       * You **must** search for and include the episode name.
-      * If an episode name **cannot be found** after searching, use the fallback format `Series Name (Country Tag) (Year) - SXXEYY.ext` and **lower the confidence score**.
-      * For multi-part episodes: `Series Name (Country Tag) (Year) - SXXEYY - EZZ - Episode Name.ext`.
-      * The country tag is **optional** and only required when multiple versions of the show exist from different countries.
+      * If an episode name **cannot be found** after searching, use the fallback format `Series Name (Year) - SXXEYY.ext` and **lower the confidence score**.
+      * For multi-part episodes: `Series Name (Year) - SXXEYY - EZZ - Episode Name.ext`.
+      * For "The Office" and "Ghosts" only, use the format: `Series Name (Country Tag) (Year) - SXXEYY - Episode Name.ext`.
   * **Extras:** Place in subfolders at the **Series level** or **Season level**.
       * **Valid Subfolders:** `behind the scenes`, `deleted scenes`, `interviews`, `scenes`, `samples`, `shorts`, `featurettes`, `clips`, `other`, `extras`, `trailers`.
       * **File Naming:** Use descriptive names (e.g., `Season 01/interviews/Interview with Cast.mp4`).
