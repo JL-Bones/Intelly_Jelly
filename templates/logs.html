@@ -64,10 +64,8 @@
         }
         
         .stats {
-            background: white;
             padding: 20px 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -91,10 +89,8 @@
         }
         
         .logs-container {
-            background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .logs-header {
@@ -105,7 +101,7 @@
         }
         
         .logs-header h2 {
-            color: #333;
+            color: var(--text-primary);
         }
         
         .refresh-btn {
@@ -129,22 +125,18 @@
         }
         
         .logs-table th {
-            background: #f8f9fa;
             padding: 12px;
             text-align: left;
             font-weight: 600;
-            color: #333;
-            border-bottom: 2px solid #dee2e6;
         }
         
         .logs-table td {
             padding: 12px;
-            border-bottom: 1px solid #dee2e6;
             font-size: 13px;
         }
         
         .logs-table tr:hover {
-            background: #f8f9fa;
+            background: var(--table-row-hover);
         }
         
         .status-badge {
@@ -155,9 +147,9 @@
             font-weight: 600;
         }
         
-        .status-success { background: #55efc4; color: #00b894; }
-        .status-failed { background: #ff7675; color: #d63031; }
-        .status-dry_run { background: #a29bfe; color: #6c5ce7; }
+        .status-success { background: var(--status-completed-bg); color: var(--status-completed-text); }
+        .status-failed { background: var(--status-failed-bg); color: var(--status-failed-text); }
+        .status-dry_run { background: var(--status-pending-bg); color: var(--status-pending-text); }
         
         .path-text {
             word-break: break-all;
@@ -166,11 +158,11 @@
         
         .timestamp {
             white-space: nowrap;
-            color: #666;
+            color: var(--text-secondary);
         }
         
         .error-message {
-            color: #c53030;
+            color: var(--error-text);
             font-size: 12px;
             font-style: italic;
         }
@@ -178,7 +170,7 @@
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #999;
+            color: var(--text-secondary);
         }
         
         .empty-state-icon {
