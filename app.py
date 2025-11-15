@@ -4,6 +4,7 @@ import os
 import logging
 import secrets
 import hashlib
+import json
 from functools import wraps
 from datetime import datetime, timedelta
 
@@ -35,9 +36,65 @@ library_browser = LibraryBrowser(config_manager.get('LIBRARY_PATH', './test_fold
 
 backend_thread = None
 
-# Token storage (in production, use Redis or database)
+# Token storage (persisted to disk)
+TOKENS_FILE = 'tokens.json'
 app_tokens = {}  # {token: {password_hash: str, expires: datetime}}
 admin_tokens = {}  # {token: {password_hash: str, expires: datetime}}
+
+
+def load_tokens():
+    """Load tokens from disk"""
+    global app_tokens, admin_tokens
+    try:
+        if os.path.exists(TOKENS_FILE):
+            with open(TOKENS_FILE, 'r') as f:
+                data = json.load(f)
+                # Convert ISO format strings back to datetime objects
+                app_tokens = {
+                    token: {
+                        'password_hash': info['password_hash'],
+                        'expires': datetime.fromisoformat(info['expires'])
+                    }
+                    for token, info in data.get('app_tokens', {}).items()
+                }
+                admin_tokens = {
+                    token: {
+                        'password_hash': info['password_hash'],
+                        'expires': datetime.fromisoformat(info['expires'])
+                    }
+                    for token, info in data.get('admin_tokens', {}).items()
+                }
+                logger.info(f"Loaded {len(app_tokens)} app tokens and {len(admin_tokens)} admin tokens")
+    except Exception as e:
+        logger.error(f"Error loading tokens: {e}")
+        app_tokens = {}
+        admin_tokens = {}
+
+
+def save_tokens():
+    """Save tokens to disk"""
+    try:
+        data = {
+            'app_tokens': {
+                token: {
+                    'password_hash': info['password_hash'],
+                    'expires': info['expires'].isoformat()
+                }
+                for token, info in app_tokens.items()
+            },
+            'admin_tokens': {
+                token: {
+                    'password_hash': info['password_hash'],
+                    'expires': info['expires'].isoformat()
+                }
+                for token, info in admin_tokens.items()
+            }
+        }
+        with open(TOKENS_FILE, 'w') as f:
+            json.dump(data, f, indent=2)
+        logger.debug("Tokens saved to disk")
+    except Exception as e:
+        logger.error(f"Error saving tokens: {e}")
 
 
 def start_backend():
@@ -61,6 +118,7 @@ def validate_app_token(token):
                 return True
         # Token expired or password changed, remove it
         del app_tokens[token]
+        save_tokens()
     return False
 
 
@@ -73,6 +131,7 @@ def validate_admin_token(token):
                 return True
         # Token expired or password changed, remove it
         del admin_tokens[token]
+        save_tokens()
     return False
 
 
@@ -132,6 +191,7 @@ def app_login():
                     'password_hash': hash_password(app_password),
                     'expires': datetime.now() + timedelta(days=30)
                 }
+                save_tokens()
                 response_data['token'] = token
             
             return jsonify(response_data)
@@ -160,6 +220,7 @@ def admin_login():
                     'password_hash': hash_password(admin_password),
                     'expires': datetime.now() + timedelta(days=30)
                 }
+                save_tokens()
                 response_data['token'] = token
             
             return jsonify(response_data)
@@ -507,6 +568,9 @@ if __name__ == '__main__':
     os.makedirs('./test_folders/downloading', exist_ok=True)
     os.makedirs('./test_folders/completed', exist_ok=True)
     os.makedirs('./test_folders/library', exist_ok=True)
+    
+    # Load saved authentication tokens
+    load_tokens()
     
     backend_thread = threading.Thread(target=start_backend, daemon=True)
     backend_thread.start()

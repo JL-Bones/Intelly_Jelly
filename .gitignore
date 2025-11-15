@@ -25,6 +25,9 @@ config.json
 *.egg
 file_movements.json
 
+# Authentication tokens
+tokens.json
+
 # Environment variables
 .env
 
