@@ -254,15 +254,11 @@ class AIProcessor:
             logger.info(f"Full Prompt:\n{prompt}")
             logger.info("=" * 80)
             
-            # Use responses.create API exactly as in the example
+            # Use responses.create API with tools parameter
             response = self.openai_client.responses.create(
                 model=model,
                 input=prompt,
-                extra_body={
-                    "websearch": {
-                        "enable": enable_web_search
-                    }
-                }
+                tools=[{"type": "web_search"}] if enable_web_search else []
             )
             
             self.last_api_call_time = time.time()
