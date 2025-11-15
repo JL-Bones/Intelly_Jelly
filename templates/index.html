@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Intelly Jelly - Media Organizer</title>
+    <link rel="stylesheet" href="/static/themes.css">
     <style>
         * {
             margin: 0;
@@ -13,7 +14,6 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -24,19 +24,30 @@
         }
         
         header {
-            background: white;
             padding: 20px 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
         h1 {
-            color: #667eea;
             font-size: 28px;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         
         .nav-links {
@@ -45,22 +56,15 @@
         }
         
         .nav-links a {
-            color: #667eea;
             text-decoration: none;
             padding: 10px 20px;
             border-radius: 5px;
             transition: background 0.3s;
         }
         
-        .nav-links a:hover {
-            background: #f0f0f0;
-        }
-        
         .stats {
-            background: white;
             padding: 20px 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -74,20 +78,18 @@
         .stat-value {
             font-size: 32px;
             font-weight: bold;
-            color: #667eea;
+            color: var(--primary-color);
         }
         
         .stat-label {
-            color: #666;
+            color: var(--text-secondary);
             font-size: 14px;
             margin-top: 5px;
         }
         
         .jobs-container {
-            background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .jobs-header {
@@ -98,7 +100,7 @@
         }
         
         .jobs-header h2 {
-            color: #333;
+            color: var(--text-primary);
         }
         
         .refresh-btn {
@@ -122,21 +124,17 @@
         }
         
         .jobs-table th {
-            background: #f8f9fa;
             padding: 12px;
             text-align: left;
             font-weight: 600;
-            color: #333;
-            border-bottom: 2px solid #dee2e6;
         }
         
         .jobs-table td {
             padding: 12px;
-            border-bottom: 1px solid #dee2e6;
         }
         
         .jobs-table tr:hover {
-            background: #f8f9fa;
+            background: var(--table-row-hover);
         }
         
         .status-badge {
@@ -147,19 +145,16 @@
             font-weight: 600;
         }
         
-        .status-queued { background: #ffeaa7; color: #d63031; }
-        .status-processing { background: #74b9ff; color: #0984e3; }
-        .status-pending { background: #a29bfe; color: #6c5ce7; }
-        .status-completed { background: #55efc4; color: #00b894; }
-        .status-failed { background: #ff7675; color: #d63031; }
-        .status-manual { background: #fdcb6e; color: #e17055; }
+        .status-queued { background: var(--status-queued-bg); color: var(--status-queued-text); }
+        .status-processing { background: var(--status-processing-bg); color: var(--status-processing-text); }
+        .status-pending { background: var(--status-pending-bg); color: var(--status-pending-text); }
+        .status-completed { background: var(--status-completed-bg); color: var(--status-completed-text); }
+        .status-failed { background: var(--status-failed-bg); color: var(--status-failed-text); }
+        .status-manual { background: var(--status-manual-bg); color: var(--status-manual-text); }
         
         .error-message {
-            background: #fff5f5;
-            color: #c53030;
             padding: 12px;
             font-size: 13px;
-            border-left: 3px solid #fc8181;
         }
         
         .actions {
@@ -208,7 +203,6 @@
         }
         
         .modal-content {
-            background: white;
             padding: 30px;
             border-radius: 10px;
             max-width: 550px;
@@ -225,7 +219,7 @@
         }
         
         .modal-header h3 {
-            color: #333;
+            color: var(--heading-color);
         }
         
         .close-btn {
@@ -233,7 +227,7 @@
             border: none;
             font-size: 24px;
             cursor: pointer;
-            color: #999;
+            color: var(--text-secondary);
         }
         
         .form-group {
@@ -243,7 +237,7 @@
         .form-group label {
             display: block;
             margin-bottom: 5px;
-            color: #333;
+            color: var(--text-primary);
             font-weight: 600;
         }
         
@@ -251,9 +245,11 @@
         .form-group textarea {
             width: 100%;
             padding: 10px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--input-border);
             border-radius: 5px;
             font-size: 14px;
+            background: var(--input-bg);
+            color: var(--input-text);
         }
         
         .form-group textarea {
@@ -266,7 +262,7 @@
             flex-direction: column;
             gap: 12px;
             padding: 10px;
-            background: #f8f9fa;
+            background: var(--table-header-bg);
             border-radius: 5px;
             margin-top: 8px;
         }
@@ -277,7 +273,7 @@
             gap: 10px;
             cursor: pointer;
             font-weight: 400;
-            color: #555;
+            color: var(--text-primary);
         }
         
         .checkbox-label input[type="checkbox"] {
@@ -304,8 +300,8 @@
         }
         
         .btn-secondary {
-            background: #ddd;
-            color: #333;
+            background: var(--table-header-bg);
+            color: var(--text-primary);
             padding: 10px 20px;
             border: none;
             border-radius: 5px;
@@ -316,7 +312,7 @@
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #999;
+            color: var(--text-secondary);
         }
         
         .empty-state-icon {
@@ -339,6 +335,12 @@
                 flex-direction: column;
                 gap: 15px;
                 text-align: center;
+            }
+            
+            .header-left,
+            .header-right {
+                width: 100%;
+                flex-direction: column;
             }
             
             h1 {
@@ -533,12 +535,22 @@
 <body>
     <div class="container">
         <header>
-            <h1>🍇 Intelly Jelly</h1>
-            <div class="nav-links">
-                <a href="/">Downloads</a>
-                <a href="/library">Library</a>
-                <a href="/settings">Settings</a>
-                <a href="/logs">Logs</a>
+            <div class="header-left">
+                <h1>🍇 Intelly Jelly</h1>
+            </div>
+            <div class="header-right">
+                <div class="nav-links">
+                    <a href="/">Downloads</a>
+                    <a href="/library">Library</a>
+                    <a href="/settings">Settings</a>
+                    <a href="/logs">Logs</a>
+                </div>
+                <div class="theme-selector">
+                    <select id="theme-select" onchange="changeTheme(this.value)">
+                        <option value="dark">🌙 Dark</option>
+                        <option value="light">☀️ Light</option>
+                    </select>
+                </div>
             </div>
         </header>
         
@@ -631,6 +643,21 @@
     </div>
     
     <script>
+        // Theme management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('intelly-jelly-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('theme-select').value = savedTheme;
+        }
+        
+        function changeTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('intelly-jelly-theme', theme);
+        }
+        
+        // Initialize theme on page load
+        initTheme();
+        
         let currentJobId = null;
         
         function getStatusClass(status) {

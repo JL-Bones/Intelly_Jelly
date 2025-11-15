@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movement Logs - Intelly Jelly</title>
+    <link rel="stylesheet" href="/static/themes.css">
     <style>
         * {
             margin: 0;
@@ -13,7 +14,6 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -24,19 +24,30 @@
         }
         
         header {
-            background: white;
             padding: 20px 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
         h1 {
-            color: #667eea;
             font-size: 28px;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         
         .nav-links {
@@ -45,22 +56,15 @@
         }
         
         .nav-links a {
-            color: #667eea;
             text-decoration: none;
             padding: 10px 20px;
             border-radius: 5px;
             transition: background 0.3s;
         }
         
-        .nav-links a:hover {
-            background: #f0f0f0;
-        }
-        
         .stats {
-            background: white;
             padding: 20px 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -84,10 +88,8 @@
         }
         
         .logs-container {
-            background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .logs-header {
@@ -98,7 +100,7 @@
         }
         
         .logs-header h2 {
-            color: #333;
+            color: var(--text-primary);
         }
         
         .refresh-btn {
@@ -122,22 +124,18 @@
         }
         
         .logs-table th {
-            background: #f8f9fa;
             padding: 12px;
             text-align: left;
             font-weight: 600;
-            color: #333;
-            border-bottom: 2px solid #dee2e6;
         }
         
         .logs-table td {
             padding: 12px;
-            border-bottom: 1px solid #dee2e6;
             font-size: 13px;
         }
         
         .logs-table tr:hover {
-            background: #f8f9fa;
+            background: var(--table-row-hover);
         }
         
         .status-badge {
@@ -148,9 +146,9 @@
             font-weight: 600;
         }
         
-        .status-success { background: #55efc4; color: #00b894; }
-        .status-failed { background: #ff7675; color: #d63031; }
-        .status-dry_run { background: #a29bfe; color: #6c5ce7; }
+        .status-success { background: var(--status-completed-bg); color: var(--status-completed-text); }
+        .status-failed { background: var(--status-failed-bg); color: var(--status-failed-text); }
+        .status-dry_run { background: var(--status-pending-bg); color: var(--status-pending-text); }
         
         .path-text {
             word-break: break-all;
@@ -159,11 +157,11 @@
         
         .timestamp {
             white-space: nowrap;
-            color: #666;
+            color: var(--text-secondary);
         }
         
         .error-message {
-            color: #c53030;
+            color: var(--error-text);
             font-size: 12px;
             font-style: italic;
         }
@@ -171,7 +169,7 @@
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #999;
+            color: var(--text-secondary);
         }
         
         .empty-state-icon {
@@ -189,6 +187,12 @@
                 padding: 15px;
                 flex-direction: column;
                 gap: 15px;
+            }
+            
+            .header-left,
+            .header-right {
+                width: 100%;
+                flex-direction: column;
             }
             
             h1 {
@@ -225,12 +229,22 @@
 <body>
     <div class="container">
         <header>
-            <h1>🍇 Intelly Jelly - Movement Logs</h1>
-            <div class="nav-links">
-                <a href="/">Downloads</a>
-                <a href="/library">Library</a>
-                <a href="/settings">Settings</a>
-                <a href="/logs">Logs</a>
+            <div class="header-left">
+                <h1>🍇 Intelly Jelly</h1>
+            </div>
+            <div class="header-right">
+                <div class="nav-links">
+                    <a href="/">Downloads</a>
+                    <a href="/library">Library</a>
+                    <a href="/settings">Settings</a>
+                    <a href="/logs">Logs</a>
+                </div>
+                <div class="theme-selector">
+                    <select id="theme-select" onchange="changeTheme(this.value)">
+                        <option value="dark">🌙 Dark</option>
+                        <option value="light">☀️ Light</option>
+                    </select>
+                </div>
             </div>
         </header>
         
@@ -260,6 +274,21 @@
     </div>
     
     <script>
+        // Theme management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('intelly-jelly-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('theme-select').value = savedTheme;
+        }
+        
+        function changeTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('intelly-jelly-theme', theme);
+        }
+        
+        // Initialize theme on page load
+        initTheme();
+        
         function getStatusClass(status) {
             return `status-${status}`;
         }

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Library Browser - Intelly Jelly</title>
+    <link rel="stylesheet" href="/static/themes.css">
     <style>
         * {
             margin: 0;
@@ -13,7 +14,6 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
@@ -24,19 +24,30 @@
         }
         
         header {
-            background: white;
             padding: 20px 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
         }
         
         h1 {
-            color: #667eea;
             font-size: 28px;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
         
         .nav-links {
@@ -45,22 +56,15 @@
         }
         
         .nav-links a {
-            color: #667eea;
             text-decoration: none;
             padding: 10px 20px;
             border-radius: 5px;
             transition: background 0.3s;
         }
         
-        .nav-links a:hover {
-            background: #f0f0f0;
-        }
-        
         .stats {
-            background: white;
             padding: 20px 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             margin-bottom: 20px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -84,10 +88,8 @@
         }
         
         .library-container {
-            background: white;
             padding: 30px;
             border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         
         .library-header {
@@ -100,7 +102,7 @@
         }
         
         .library-header h2 {
-            color: #333;
+            color: var(--text-primary);
         }
         
         .search-box {
@@ -111,10 +113,12 @@
         
         .search-box input {
             padding: 10px 15px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--input-border);
             border-radius: 5px;
             font-size: 14px;
             width: 300px;
+            background: var(--input-bg);
+            color: var(--input-text);
         }
         
         .btn {
@@ -131,13 +135,13 @@
         }
         
         .btn-primary {
-            background: #667eea;
+            background: var(--primary-color);
             color: white;
         }
         
         .btn-secondary {
-            background: #ddd;
-            color: #333;
+            background: var(--table-header-bg);
+            color: var(--text-primary);
         }
         
         .btn-small {
@@ -162,28 +166,28 @@
         }
         
         .files-table th {
-            background: #f8f9fa;
             padding: 12px;
             text-align: left;
             font-weight: 600;
-            color: #333;
-            border-bottom: 2px solid #dee2e6;
             cursor: pointer;
             user-select: none;
         }
         
         .files-table th:hover {
-            background: #e9ecef;
+            background: var(--table-row-hover);
         }
         
         .files-table td {
             padding: 12px;
-            border-bottom: 1px solid #dee2e6;
             font-size: 13px;
         }
         
         .files-table tr:hover {
-            background: #f8f9fa;
+            background: var(--table-row-hover);
+        }
+        
+        .folder-row {
+            background: var(--table-header-bg);
         }
         
         .file-icon {
@@ -225,15 +229,16 @@
         
         .pagination button {
             padding: 8px 16px;
-            border: 1px solid #ddd;
-            background: white;
+            border: 1px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-primary);
             border-radius: 5px;
             cursor: pointer;
             transition: background 0.3s;
         }
         
         .pagination button:hover:not(:disabled) {
-            background: #f0f0f0;
+            background: var(--table-row-hover);
         }
         
         .pagination button:disabled {
@@ -242,7 +247,7 @@
         }
         
         .pagination .page-info {
-            color: #666;
+            color: var(--text-secondary);
             font-size: 14px;
         }
         
@@ -264,7 +269,6 @@
         }
         
         .modal-content {
-            background: white;
             padding: 30px;
             border-radius: 10px;
             max-width: 550px;
@@ -281,7 +285,7 @@
         }
         
         .modal-header h3 {
-            color: #333;
+            color: var(--heading-color);
         }
         
         .close-btn {
@@ -289,7 +293,7 @@
             border: none;
             font-size: 24px;
             cursor: pointer;
-            color: #999;
+            color: var(--text-secondary);
         }
         
         .form-group {
@@ -299,7 +303,7 @@
         .form-group label {
             display: block;
             margin-bottom: 5px;
-            color: #333;
+            color: var(--text-primary);
             font-weight: 600;
         }
         
@@ -307,9 +311,11 @@
         .form-group textarea {
             width: 100%;
             padding: 10px;
-            border: 1px solid #ddd;
+            border: 1px solid var(--input-border);
             border-radius: 5px;
             font-size: 14px;
+            background: var(--input-bg);
+            color: var(--input-text);
         }
         
         .form-group textarea {
@@ -322,7 +328,7 @@
             flex-direction: column;
             gap: 12px;
             padding: 10px;
-            background: #f8f9fa;
+            background: var(--table-header-bg);
             border-radius: 5px;
             margin-top: 8px;
         }
@@ -333,7 +339,7 @@
             gap: 10px;
             cursor: pointer;
             font-weight: 400;
-            color: #555;
+            color: var(--text-primary);
         }
         
         .checkbox-label input[type="checkbox"] {
@@ -352,7 +358,7 @@
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #999;
+            color: var(--text-secondary);
         }
         
         .empty-state-icon {
@@ -362,13 +368,13 @@
         
         .info-text {
             font-size: 12px;
-            color: #666;
+            color: var(--text-secondary);
             margin-top: 5px;
         }
         
         .pending-renames {
-            background: #fff9e6;
-            border: 2px solid #ffd700;
+            background: var(--card-bg);
+            border: 2px solid var(--primary-color);
             border-radius: 10px;
             padding: 20px;
             margin-bottom: 20px;
@@ -380,7 +386,7 @@
         }
         
         .pending-renames h3 {
-            color: #333;
+            color: var(--text-primary);
             margin-bottom: 15px;
             display: flex;
             align-items: center;
@@ -388,8 +394,8 @@
         }
         
         .spinner {
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
             border-radius: 50%;
             width: 20px;
             height: 20px;
@@ -403,11 +409,11 @@
         }
         
         .pending-item {
-            background: white;
+            background: var(--table-header-bg);
             padding: 15px;
             border-radius: 5px;
             margin-bottom: 10px;
-            border-left: 4px solid #a29bfe;
+            border-left: 4px solid var(--primary-color);
         }
         
         .pending-item:last-child {
@@ -416,13 +422,13 @@
         
         .pending-item .file-name {
             font-weight: 600;
-            color: #333;
+            color: var(--text-primary);
             margin-bottom: 5px;
         }
         
         .pending-item .status {
             font-size: 12px;
-            color: #666;
+            color: var(--text-secondary);
         }
         
         .loading-overlay {
@@ -443,7 +449,8 @@
         }
         
         .loading-content {
-            background: white;
+            background: var(--card-bg);
+            color: var(--text-primary);
             padding: 30px;
             border-radius: 10px;
             text-align: center;
@@ -466,6 +473,12 @@
                 padding: 15px;
                 flex-direction: column;
                 gap: 15px;
+            }
+            
+            .header-left,
+            .header-right {
+                width: 100%;
+                flex-direction: column;
             }
             
             h1 {
@@ -507,12 +520,22 @@
 <body>
     <div class="container">
         <header>
-            <h1>🍇 Intelly Jelly - Library</h1>
-            <div class="nav-links">
-                <a href="/">Downloads</a>
-                <a href="/library">Library</a>
-                <a href="/settings">Settings</a>
-                <a href="/logs">Logs</a>
+            <div class="header-left">
+                <h1>🍇 Intelly Jelly</h1>
+            </div>
+            <div class="header-right">
+                <div class="nav-links">
+                    <a href="/">Downloads</a>
+                    <a href="/library">Library</a>
+                    <a href="/settings">Settings</a>
+                    <a href="/logs">Logs</a>
+                </div>
+                <div class="theme-selector">
+                    <select id="theme-select" onchange="changeTheme(this.value)">
+                        <option value="dark">🌙 Dark</option>
+                        <option value="light">☀️ Light</option>
+                    </select>
+                </div>
             </div>
         </header>
         
@@ -576,7 +599,7 @@
             </div>
             <div class="form-group">
                 <label>Current Name</label>
-                <input type="text" id="current-name" readonly style="background: #f5f5f5;">
+                <input type="text" id="current-name" readonly style="opacity: 0.7;">
             </div>
             <div class="form-group">
                 <label>New Name or Path</label>
@@ -605,7 +628,7 @@
             </div>
             <div class="form-group">
                 <label>Current Name</label>
-                <input type="text" id="reai-current-name" readonly style="background: #f5f5f5;">
+                <input type="text" id="reai-current-name" readonly style="opacity: 0.7;">
             </div>
             <div class="form-group">
                 <label>Custom Prompt (optional)</label>
@@ -636,6 +659,21 @@
     </div>
     
     <script>
+        // Theme management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('intelly-jelly-theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('theme-select').value = savedTheme;
+        }
+        
+        function changeTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('intelly-jelly-theme', theme);
+        }
+        
+        // Initialize theme on page load
+        initTheme();
+        
         let currentPage = 1;
         let currentSearch = '';
         let currentSort = 'modified';
@@ -763,7 +801,7 @@
             // Add parent directory row if not at root
             if (hasParent) {
                 html += `
-                    <tr style="background: #f8f9fa;">
+                    <tr class="folder-row">
                         <td colspan="5" style="cursor: pointer;" onclick="navigateToDir('${parentDir || ''}')">
                             <span class="file-icon">📁</span>
                             <strong>.. (Go Back)</strong>
@@ -777,7 +815,7 @@
                 if (item.is_folder) {
                     // It's a folder
                     html += `
-                        <tr style="cursor: pointer; background: #fafbfc;" onclick="navigateToDir('${item.relative_path}')">
+                        <tr class="folder-row" style="cursor: pointer;" onclick="navigateToDir('${item.relative_path}')">
                             <td>
                                 <span class="file-icon">📁</span>
                                 <strong>${item.name}</strong>
