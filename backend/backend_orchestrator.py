@@ -35,6 +35,8 @@ class BackendOrchestrator:
         self.queue_running = False
         
         self._running = False
+        self._last_processing_time = time.time()  # Track last time we processed something
+        self._stall_timeout = 30  # seconds before considering queue stalled
         
         self.config_manager.register_change_callback(self._on_config_change)
 
@@ -102,9 +104,19 @@ class BackendOrchestrator:
             logger.warning(f"Job already exists for {relative_path} (job_id: {existing_job.job_id})")
             return
         
-        # Check if there's an existing job with the same base name (for grouping)
+        # Check if there's an existing job with the same base name AND in the same directory (for grouping)
+        # This ensures files in different subdirectories are not grouped together
+        file_dir = os.path.dirname(relative_path)
         base_name = os.path.splitext(os.path.basename(relative_path))[0]
-        existing_group_job = self.job_store.find_job_by_base_name(base_name)
+        
+        # Find existing job with same base name in the same directory
+        existing_group_job = None
+        for job in self.job_store.get_all_jobs():
+            job_dir = os.path.dirname(job.relative_path)
+            job_base_name = os.path.splitext(os.path.basename(job.relative_path))[0]
+            if job_base_name == base_name and job_dir == file_dir:
+                existing_group_job = job
+                break
         
         job = self.job_store.add_job(file_path, relative_path)
         # Apply default web search setting from config
@@ -128,6 +140,35 @@ class BackendOrchestrator:
         
         # Job is now in queue and will be processed by queue worker
 
+    def _check_stalled_queue(self):
+        """
+        Check if there are queued jobs but none processing for an extended period,
+        indicating a stalled queue.
+        """
+        queued_jobs = self.job_store.get_jobs_by_status(JobStatus.QUEUED_FOR_AI)
+        processing_jobs = self.job_store.get_jobs_by_status(JobStatus.PROCESSING_AI)
+        
+        # Explicitly exclude failed jobs from the queued list (extra safety check)
+        queued_jobs = [j for j in queued_jobs if j.status != JobStatus.FAILED]
+        
+        if queued_jobs and not processing_jobs:
+            # Check how long it's been since we last processed something
+            time_since_last_processing = time.time() - self._last_processing_time
+            
+            if time_since_last_processing > self._stall_timeout:
+                logger.warning(f"Detected stalled queue: {len(queued_jobs)} jobs queued but none processing for {time_since_last_processing:.1f}s. Forcing processing to resume.")
+                
+                # Reset the timer to avoid repeated warnings
+                self._last_processing_time = time.time()
+                
+                # Force process a job to break the stall
+                # Prioritize single files over grouped files to break potential group deadlocks
+                non_grouped_jobs = [j for j in queued_jobs if not j.group_id or j.is_group_primary]
+                if non_grouped_jobs:
+                    return True
+        
+        return False
+    
     def _queue_worker(self):
         """Process jobs one at a time from the queue."""
         logger.info("Queue worker started - processing one job at a time")
@@ -137,6 +178,10 @@ class BackendOrchestrator:
                 # Check for missing files in downloading folder and remove stale jobs
                 self._check_and_remove_missing_files()
                 
+                # Check for stalled queue condition
+                if self._check_stalled_queue():
+                    logger.info("Queue was stalled, resuming processing")
+                
                 # First check for priority jobs (re-AI requests)
                 priority_jobs = self.job_store.get_priority_jobs()
                 
@@ -144,6 +189,7 @@ class BackendOrchestrator:
                     job = priority_jobs[0]
                     logger.info(f"Processing priority job: {job.job_id} ({job.relative_path})")
                     self._process_single_job(job, is_priority=True)
+                    self._last_processing_time = time.time()  # Reset stall timer
                 else:
                     # Process regular queued jobs one at a time (or groups together)
                     queued_jobs = self.job_store.get_jobs_by_status(JobStatus.QUEUED_FOR_AI)
@@ -163,6 +209,7 @@ class BackendOrchestrator:
                                 # All files in group are ready, process together
                                 logger.info(f"Processing grouped jobs: {len(group_jobs)} files with same base name")
                                 self._process_grouped_jobs(group_jobs, is_priority=False)
+                                self._last_processing_time = time.time()  # Reset stall timer
                             else:
                                 # Wait for all files in group to be queued
                                 logger.debug(f"Waiting for all files in group {job.group_id} to be ready ({len(group_queued)}/{len(group_jobs)})")
@@ -170,6 +217,7 @@ class BackendOrchestrator:
                             # Single file or primary file without group
                             logger.info(f"Processing queued job: {job.job_id} ({job.relative_path})")
                             self._process_single_job(job, is_priority=False)
+                            self._last_processing_time = time.time()  # Reset stall timer
                         else:
                             # Secondary file in group, skip (will be processed with primary)
                             logger.debug(f"Skipping secondary file {job.job_id}, waiting for primary file in group")
@@ -181,6 +229,7 @@ class BackendOrchestrator:
                             job = failed_jobs[0]
                             logger.info(f"Retrying failed job: {job.job_id} ({job.relative_path}) - Attempt {job.retry_count + 1}/{job.max_retries}")
                             self._process_single_job(job, is_priority=False, is_retry=True)
+                            self._last_processing_time = time.time()  # Reset stall timer
                 
                 time.sleep(1)
             
@@ -215,10 +264,39 @@ class BackendOrchestrator:
             )
             
             if results and len(results) == len(jobs):
-                # Apply results to each job
+                # Ensure all files in the group use the same directory structure
+                # Find the primary job (typically the main video file)
+                primary_job_idx = next((i for i, j in enumerate(jobs) if j.is_group_primary), 0)
+                primary_result = results[primary_job_idx]
+                primary_suggested_name = primary_result.get('suggested_name', '')
+                
+                # Extract the directory path from the primary file
+                if '/' in primary_suggested_name or '\\' in primary_suggested_name:
+                    # Normalize path separators
+                    primary_suggested_name_normalized = primary_suggested_name.replace('\\', '/')
+                    primary_dir = os.path.dirname(primary_suggested_name_normalized)
+                    logger.info(f"Group directory structure from primary file: {primary_dir}")
+                else:
+                    primary_dir = ''
+                
+                # Apply results to each job, ensuring they use the same directory
                 for job, result in zip(jobs, results):
                     suggested_name = result.get('suggested_name')
                     confidence = result.get('confidence', 0)
+                    
+                    # If this is not the primary file, adjust its path to match the primary's directory
+                    if job != jobs[primary_job_idx] and suggested_name:
+                        suggested_name_normalized = suggested_name.replace('\\', '/')
+                        # Get just the filename from the suggested name
+                        filename = os.path.basename(suggested_name_normalized)
+                        
+                        # Combine with primary directory
+                        if primary_dir:
+                            suggested_name = f"{primary_dir}/{filename}"
+                            logger.info(f"Adjusted grouped file path: {result.get('suggested_name')} -> {suggested_name}")
+                        else:
+                            suggested_name = filename
+                    
                     self.job_store.update_job(
                         job.job_id,
                         JobStatus.PENDING_COMPLETION,
@@ -398,15 +476,22 @@ class BackendOrchestrator:
             os.makedirs(destination_dir, exist_ok=True)
             logger.debug(f"Created/verified destination directory: {destination_dir}")
             
+            # Check if destination file already exists
             if os.path.exists(destination_file):
-                logger.warning(f"Destination file already exists: {destination_file}, finding unique name")
-                base, ext = os.path.splitext(new_name)
-                counter = 1
-                while os.path.exists(destination_file):
-                    new_name = f"{base}_{counter}{ext}"
-                    destination_file = os.path.join(destination_dir, new_name)
-                    counter += 1
-                logger.info(f"Using unique filename: {new_name}")
+                # Get relative path from library root to check if it's in "Other" folder
+                relative_dest_path = os.path.relpath(destination_file, library_path)
+                is_other_folder = relative_dest_path.startswith('Other' + os.sep) or relative_dest_path.startswith('Other/')
+                
+                if is_other_folder:
+                    # Allow overwriting in "Other" folder
+                    logger.warning(f"Destination file exists in Other folder, will overwrite: {destination_file}")
+                    # Remove the existing file before moving
+                    os.remove(destination_file)
+                else:
+                    # Fail the move for all other folders
+                    error_msg = f"Destination file already exists: {destination_file}"
+                    logger.error(error_msg)
+                    raise FileExistsError(error_msg)
             
             shutil.move(file_path, destination_file)
             logger.info(f"Successfully moved file: {file_path} -> {destination_file}")

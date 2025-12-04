@@ -288,8 +288,18 @@ class LibraryBrowser:
             
             # Check if destination already exists
             if os.path.exists(new_path) and new_path != old_path:
-                result['message'] = f"Destination file already exists: {new_filename}"
-                return result
+                # Get relative path from library root to check if it's in "Other" folder
+                relative_dest_path = os.path.relpath(new_path, self.library_path)
+                is_other_folder = relative_dest_path.startswith('Other' + os.sep) or relative_dest_path.startswith('Other/')
+                
+                if is_other_folder:
+                    # Allow overwriting in "Other" folder
+                    logger.warning(f"Destination file exists in Other folder, will overwrite: {new_path}")
+                    os.remove(new_path)
+                else:
+                    # Fail the rename for all other folders
+                    result['message'] = f"Destination file already exists: {new_filename}"
+                    return result
             
             # Create destination directory if it doesn't exist
             os.makedirs(new_dir, exist_ok=True)
