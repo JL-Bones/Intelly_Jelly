@@ -15,7 +15,8 @@ Intelly Jelly watches your download folders and uses AI to intelligently organiz
 
 ## Features
 
-- 🤖 **AI-Powered Organization** - Understands context and finds missing metadata (Google AI & OpenAI supported)
+- 🤖 **AI-Powered Organization** - Understands context and finds missing metadata (Google AI, OpenAI & Ollama supported)
+- 🏠 **Local AI Support** - Run completely offline with Ollama for privacy and cost savings
 - 👀 **Real-Time Monitoring** - Watches folders for new files automatically with intelligent grouping
 - 🎬 **Media-Specific Rules** - Different organization patterns for movies, TV shows, music, books, and software
 - 🌐 **Web-Based Dashboard** - Monitor jobs, browse your library, view logs, and configure settings
@@ -57,7 +58,10 @@ Intelly_Jelly/
 ### Prerequisites
 
 - Python 3.8+
-- An AI API endpoint (configured in settings)
+- An AI provider (choose one):
+  - **Google AI** (Recommended) - Fast and accurate, requires API key
+  - **OpenAI** - Reliable alternative, requires API key
+  - **Ollama** (Local) - Run completely offline, no API key needed
 
 ### Setup
 
@@ -69,24 +73,70 @@ Intelly_Jelly/
 
 2. **Install dependencies**
    ```powershell
-   pip install -r requirements.txt
-   ```
-
-3. **Configure your paths**
+3. **Configure your paths and AI provider**
    
    On first run, you'll need to configure:
    - Downloading folder path (where files are being downloaded)
+   - Completed folder path (where downloads finish)
+   - Library path (where organized files go)
+   - AI provider and credentials (see AI Provider Setup below) (where files are being downloaded)
    - Completed folder path (where downloads finish)
    - Library path (where organized files go)
    - AI API endpoint and key
 
 4. **Run the application**
    ```powershell
-   python app.py
-   ```
-
 5. **Access the web interface**
    
+   Open your browser to `http://localhost:5000`
+
+## AI Provider Setup
+
+Intelly Jelly supports three AI providers. Choose the one that fits your needs:
+
+### Google AI (Recommended)
+The application can be configured through the web interface at `/settings` (requires admin login). Key settings include:
+
+- **Folder Paths**: Downloading, completed, and library directories
+- **AI Provider**: Choose between Google AI (recommended), OpenAI, or Ollama (local)
+- **AI Settings**: API keys, model selection, and Ollama base URL
+- **Web Search**: Enable AI to search the web for missing metadata (Google AI & OpenAI only)
+- **Auto-Processing**: Enable/disable automatic file organization
+- **Passwords**: Set app and admin passwords
+- **Jellyfin Integration**: Optional library refresh triggers
+
+Configuration is stored in `config.json` and auto-reloads without restart.
+- **Setup**:
+  1. Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+  2. In Settings, select "OpenAI" as provider
+  3. Enter your API key
+  4. Enable web search if desired
+
+### Ollama (Local AI)
+- **Model**: `llama3.2` (default, configurable)
+- **Pros**: Completely offline, no API costs, private
+- **Cons**: Web search not supported, requires local resources
+- **Setup**:
+  1. Install Ollama from [ollama.com](https://ollama.com)
+  2. Pull a model: `ollama pull llama3.2` (or llama3.1, mistral, etc.)
+  3. Start Ollama server (usually auto-starts)
+  4. In Settings:
+     - Select "Ollama" as provider
+     - Set base URL (default: `http://localhost:11434`)
+     - Choose your model from the dropdown (dynamically fetched)
+  5. Web search option is automatically disabled for Ollama
+
+**Ollama Model Selection**:
+- Models are fetched from your local Ollama server
+- Model list cached for 5 minutes
+- Recommended models for media organization:
+  - `llama3.2` - Good balance of speed and accuracy
+  - `llama3.1` - More accurate but slower
+  - `mistral` - Fast alternative
+
+**Note**: Ollama models run on your local machine, so performance depends on your hardware (GPU recommended).
+
+## Configuration
    Open your browser to `http://localhost:5000`
 
 ## Configuration
