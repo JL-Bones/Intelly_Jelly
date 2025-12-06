@@ -29,39 +29,51 @@ When processing groups (`_process_grouped_jobs`):
 - Secondary files (subtitles) have paths adjusted to match primary's directory
 - All grouped files must reach `QUEUED_FOR_AI` before batch processing
 
-## Stall Detection & Recovery
-
-The queue worker includes automatic stall detection:
-- Monitors if jobs are queued but none processing for >30 seconds
-- Tracks `_last_processing_time` and resets on every successful job start
-- **Important**: Failed jobs are explicitly excluded from stall detection
-- Forces processing resume by prioritizing non-grouped or primary jobs
-
-## File Movement Special Rules
-
-**Other folder exception**: Files moving to `Other/` can overwrite existing files (uses `os.remove()` first). All other folders fail with `FileExistsError` if destination exists.
-
-**Path resolution**: 
-- AI returns full relative paths like `Movies/Title (Year)/Title (Year).mkv`
-- For grouped files, secondary file paths get adjusted: extract filename → combine with primary's directory
-
 ## AI Provider Configuration
 
-- **Google AI (recommended)**: Uses `gemini-2.5-flash` model by default
-- OpenAI: Uses `gpt-5-mini` model by default
-- **Ollama (local)**: Uses `llama3.2` model by default, configurable base URL (default: `http://localhost:11434`)
-  - Models are fetched dynamically from Ollama server via `/api/tags` endpoint
-  - Model list cached for 5 minutes to reduce API calls
-  - Web search not supported with Ollama (UI automatically disables the option when Ollama is selected)
+### Three Provider Support
+- **Google AI**: `gemini-2.5-flash` - Supports web search & TMDB, multi-turn function calling
+- **OpenAI**: `gpt-5-mini` - TMDB only (web search not supported), multi-turn function calling via `chat.completions`
+- **Ollama**: Local models - TMDB only (web search not supported), function calling via OpenAI-compatible format
+
+### Critical Implementation Details
+
+**OpenAI API Selection**: Code automatically switches between APIs based on tools:
+- With tools (TMDB): Uses `chat.completions.create()` with multi-turn conversation for function calling
+- Without tools: Uses `responses.create()` for simpler, faster responses
+- Web search logs warning when requested (not supported by standard OpenAI API)
+
+**Multi-Turn Function Calling**: All providers support TMDB function execution:
+- Google AI: Native `function_declarations` format with tool execution loop
+- OpenAI/Ollama: OpenAI-compatible `tools` array with `tool_calls` response handling
+- Max 5 conversation turns to execute functions and get final answer
+- Functions: `search_movie`, `search_tv_show`, `get_tv_episode_info`
+
+**Settings-Driven Configuration**: 
+- `ENABLE_WEB_SEARCH` and `ENABLE_TMDB_TOOL` in `config.json` control tool availability
+- Auto AI: Jobs inherit settings from config when created (`job.enable_web_search`, `job.enable_tmdb_tool`)
+- Re-AI: Always uses current config settings, ignores any client-sent values
 - Rate limiting: 2-second delay between API calls (configurable via `AI_CALL_DELAY_SECONDS`)
-- Web search enabled per-job via `enable_web_search` flag (Google AI and OpenAI only)
-- AI prompt lives in `instruction_prompt.md` (authoritative rules for output format)
+
+## TMDB Tool Integration
+
+Located in `backend/tmdb_api.py`, the `TMDBClient` provides three functions as AI tools:
+- **search_movie**: Query movies by title, returns name/year/overview
+- **search_tv_show**: Query TV shows by title, returns name/first_air_date/overview
+- **get_tv_episode_info**: Get episode details for season/episode numbers
+
+Tool definitions differ by provider:
+- Google AI: `function_declarations` in tools array (see `_get_tmdb_tool_definition_google`)
+- OpenAI/Ollama: `tools` array with `type: "function"` (see `_get_tmdb_tools_for_openai`)
+
+Function execution: `_execute_tmdb_function()` in `ai_processor.py` handles all three functions
 
 ## Configuration Management
 
 `ConfigManager` watches `config.json` and auto-reloads:
 - Use `config_manager.register_change_callback()` for config-dependent components
 - File watchers restart when `DOWNLOADING_PATH` or `COMPLETED_PATH` changes
+- Settings UI checkboxes: Explicitly set values (checked/unchecked) - unchecked boxes don't appear in FormData
 - Priority jobs (re-AI requests) bypass queue order via `priority=True` flag
 
 ## Threading & Concurrency
@@ -71,22 +83,34 @@ The queue worker includes automatic stall detection:
 - File movements: Spawns daemon thread for delayed job removal
 - **Never block main thread**: Use existing queue worker pattern for long operations
 
+## Logging System
+
+**Line-Based Log Rotation** (`app.py` lines 16-34):
+- Uses `RotatingFileHandler` with `maxBytes=200000` (~2000 lines)
+- `backupCount=0` means no backup files - truncates and starts fresh when full
+- Always logs to `intelly_jelly.log` across restarts
+- Logs to both file and stdout (stream handler)
+
 ## Key Developer Commands
 
 ```bash
 python app.py                    # Start Flask server (http://localhost:5000)
+sudo systemctl restart intelly-jelly.service  # Restart production service
 pip install -r requirements.txt  # Install dependencies
 ```
 
 **Debugging tips**:
-- Check `intelly_jelly.log` for orchestrator/AI call traces
+- Check `intelly_jelly.log` for orchestrator/AI call traces (auto-truncates at 200KB)
 - Watch `file_movements.json` for movement audit trail
 - Use `test_folders/` for isolated testing (drop files in `test_folders/downloading`)
 - Job status changes logged at INFO level with job_id for tracing
+- OpenAI requests log full prompt/response and tool calls at INFO level
 
 ## Important Patterns
 
 **Job store thread safety**: Always wrap multi-step operations in `with self._lock:` when modifying jobs
+
+**Settings UI checkboxes**: Must explicitly read `.checked` state and set in config object - FormData omits unchecked boxes
 
 **Error handling in queue worker**: Exceptions caught and logged but worker continues (see `_queue_worker` try/except)
 
@@ -94,16 +118,19 @@ pip install -r requirements.txt  # Install dependencies
 
 **Empty directory cleanup**: Automatically removes empty dirs in downloading/completed folders after file movement
 
+**Other folder overwrite exception**: Files moving to `Other/` can overwrite (uses `os.remove()` first), all other folders fail with `FileExistsError`
+
 ## API Response Parsing
 
 AI responses must be JSON arrays with `suggested_name`, `confidence`, `original_path`. Parser handles both:
 - Direct array: `[{...}, {...}]`
 - Wrapped object: `{"files": [{...}, {...}]}`
 
-## Testing & Iteration Notes
+## Testing & Iteration
 
 No formal tests yet. For reproducing issues:
 1. Use `test_folders/downloading` for file drops
 2. Check logs for orchestrator activity and AI calls
 3. Verify job status transitions in dashboard
 4. Test grouped file scenarios with video+subtitle pairs in same directory
+5. Test TMDB function calling by enabling tool and processing movie/TV files

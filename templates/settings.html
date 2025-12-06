@@ -1582,6 +1582,10 @@
                 }
             }
             
+            // Debug: Log config being saved
+            console.log('Saving config:', config);
+            console.log('ENABLE_TMDB_TOOL value:', config.ENABLE_TMDB_TOOL);
+            
             try {
                 const response = await fetch('/api/config', {
                     method: 'POST',

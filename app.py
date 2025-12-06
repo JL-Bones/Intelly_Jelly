@@ -14,9 +14,17 @@ from backend.backend_orchestrator import BackendOrchestrator
 from backend.ai_processor import AIProcessor
 from backend.library_browser import LibraryBrowser
 
-# Configure logging with UTF-8 encoding to handle emoji and special characters
+# Configure logging with UTF-8 encoding and rotation to keep log manageable
 import sys
-file_handler = logging.FileHandler('intelly_jelly.log', encoding='utf-8')
+from logging.handlers import RotatingFileHandler
+
+# Use RotatingFileHandler - rotates at 200KB (roughly 2000 lines), keeps no backups
+file_handler = RotatingFileHandler(
+    'intelly_jelly.log', 
+    maxBytes=200000,  # ~2000 lines * 100 chars/line
+    backupCount=0,  # No backup files - just truncate and start fresh
+    encoding='utf-8'
+)
 stream_handler = logging.StreamHandler(sys.stdout)
 stream_handler.stream.reconfigure(encoding='utf-8') if hasattr(stream_handler.stream, 'reconfigure') else None
 
@@ -336,8 +344,11 @@ def re_ai_job(job_id):
         custom_prompt = data.get('custom_prompt')
         include_instructions = data.get('include_instructions', True)
         include_filename = data.get('include_filename', True)
-        enable_web_search = data.get('enable_web_search', False)
-        enable_tmdb_tool = data.get('enable_tmdb_tool', False)
+        
+        # Always use settings from config for web search and TMDB tool
+        enable_web_search = config_manager.get('ENABLE_WEB_SEARCH', False)
+        enable_tmdb_tool = config_manager.get('ENABLE_TMDB_TOOL', False)
+        
         logger.debug(f"Re-AI job data: custom_prompt={bool(custom_prompt)}, include_instructions={include_instructions}, include_filename={include_filename}, enable_web_search={enable_web_search}, enable_tmdb_tool={enable_tmdb_tool}")
         
         success = orchestrator.re_ai_job(job_id, custom_prompt, include_instructions, include_filename, enable_web_search, enable_tmdb_tool)

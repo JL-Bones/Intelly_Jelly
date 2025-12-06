@@ -106,37 +106,39 @@ Intelly Jelly supports three AI providers. Choose the one that fits your needs:
 
 ### OpenAI
 - **Model**: `gpt-5-mini` (default, configurable)
-- **Pros**: Reliable, supports web search and TMDB tool
-- **Cons**: Requires API key, costs per request
+- **Pros**: Reliable, supports TMDB tool with function calling
+- **Cons**: Requires API key, costs per request, web search not supported
 - **Setup**:
   1. Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
   2. In Settings, select "OpenAI" as provider
   3. Enter your API key
-  4. Enable web search and/or TMDB tool if desired
+  4. Enable TMDB tool if desired (web search not available with OpenAI)
 
 ### Ollama (Local AI)
-- **Model**: `llama3.2` (default, configurable)
-- **Pros**: Completely offline, no API costs, private
-- **Cons**: Web search not supported, requires local resources
+- **Model**: `deepseek-r1:1.5b` (default), `llama3.2`, or any compatible model
+- **Pros**: Completely offline, no API costs, private, supports TMDB tool
+- **Cons**: Web search not supported, requires local resources (GPU recommended)
 - **Setup**:
   1. Install Ollama from [ollama.com](https://ollama.com)
-  2. Pull a model: `ollama pull llama3.2` (or llama3.1, mistral, etc.)
+  2. Pull a model: `ollama pull deepseek-r1:1.5b` (or llama3.2, mistral, etc.)
   3. Start Ollama server (usually auto-starts)
   4. In Settings:
      - Select "Ollama" as provider
      - Set base URL (default: `http://localhost:11434`)
      - Choose your model from the dropdown (dynamically fetched)
+     - Enable TMDB tool if desired
   5. Web search option is automatically disabled for Ollama
 
 **Ollama Model Selection**:
-- Models are fetched from your local Ollama server
-- Model list cached for 5 minutes
+- Models are fetched from your local Ollama server dynamically
+- Model list cached for 5 minutes to reduce API calls
 - Recommended models for media organization:
+  - `deepseek-r1:1.5b` - Fast and efficient, good for basic organization
   - `llama3.2` - Good balance of speed and accuracy
-  - `llama3.1` - More accurate but slower
-  - `mistral` - Fast alternative
+  - `llama3.1` - More accurate but slower, better for complex cases
+  - `mistral` - Fast alternative with good reasoning
 
-**Note**: Ollama models run on your local machine, so performance depends on your hardware (GPU recommended).
+**Note**: Ollama models run on your local machine, so performance depends on your hardware (GPU highly recommended). TMDB tool support added for enhanced metadata lookup.
 
 ## TMDB Tool (The Movie Database)
 
@@ -276,9 +278,11 @@ Subtitles, extras, and special features are handled according to media server co
 
 All operations are logged for debugging and audit purposes:
 - **Console output**: Real-time status updates
-- **intelly_jelly.log**: Application logs with DEBUG/INFO/ERROR levels
+- **intelly_jelly.log**: Application logs with DEBUG/INFO/ERROR levels (auto-rotates at 200KB/~2000 lines)
 - **file_movements.json**: Structured JSON audit trail of all file movements
 - **tokens.json**: Session tokens for authentication
+
+**Log Rotation**: The main log file automatically truncates when it reaches 200KB (approximately 2000 lines) with no backup files created. This ensures logs remain manageable while preserving recent history across restarts.
 
 ## Troubleshooting
 

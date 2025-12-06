@@ -626,14 +626,6 @@
                         <input type="checkbox" id="reai-include-filename" checked>
                         <span>Include original filename</span>
                     </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="reai-web-search">
-                        <span>Enable web search</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="reai-tmdb-tool">
-                        <span>Enable TMDB tool</span>
-                    </label>
                 </div>
             </div>
             <div class="form-actions">
@@ -844,57 +836,6 @@
         async function openReAIModal(jobId) {
             currentJobId = jobId;
             document.getElementById('reai-prompt').value = '';
-            
-            // Check AI provider and sync settings with main config
-            try {
-                const response = await fetch('/api/config');
-                const config = await response.json();
-                const provider = config.AI_PROVIDER || 'google';
-                
-                const webSearchCheckbox = document.getElementById('reai-web-search');
-                const webSearchLabel = webSearchCheckbox.closest('.checkbox-label');
-                const tmdbToolCheckbox = document.getElementById('reai-tmdb-tool');
-                const tmdbToolLabel = tmdbToolCheckbox.closest('.checkbox-label');
-                
-                // Sync checkboxes with main settings
-                webSearchCheckbox.checked = config.ENABLE_WEB_SEARCH || false;
-                tmdbToolCheckbox.checked = config.ENABLE_TMDB_TOOL || false;
-                
-                if (provider === 'ollama') {
-                    // Disable web search for Ollama
-                    webSearchCheckbox.disabled = true;
-                    webSearchCheckbox.checked = false;
-                    if (webSearchLabel) {
-                        webSearchLabel.style.opacity = '0.5';
-                        webSearchLabel.style.cursor = 'not-allowed';
-                        webSearchLabel.title = 'Web search is not supported with Ollama';
-                    }
-                    // TMDB tool works with all providers including Ollama
-                    tmdbToolCheckbox.disabled = false;
-                    if (tmdbToolLabel) {
-                        tmdbToolLabel.style.opacity = '1';
-                        tmdbToolLabel.style.cursor = 'pointer';
-                        tmdbToolLabel.title = '';
-                    }
-                } else {
-                    // Enable both for Google AI and OpenAI
-                    webSearchCheckbox.disabled = false;
-                    tmdbToolCheckbox.disabled = false;
-                    if (webSearchLabel) {
-                        webSearchLabel.style.opacity = '1';
-                        webSearchLabel.style.cursor = 'pointer';
-                        webSearchLabel.title = '';
-                    }
-                    if (tmdbToolLabel) {
-                        tmdbToolLabel.style.opacity = '1';
-                        tmdbToolLabel.style.cursor = 'pointer';
-                        tmdbToolLabel.title = '';
-                    }
-                }
-            } catch (error) {
-                console.error('Error checking AI provider:', error);
-            }
-            
             document.getElementById('reai-modal').classList.add('active');
         }
         
@@ -907,8 +848,6 @@
             let customPrompt = document.getElementById('reai-prompt').value;
             const includeInstructions = document.getElementById('reai-include-instructions').checked;
             const includeFilename = document.getElementById('reai-include-filename').checked;
-            const enableWebSearch = document.getElementById('reai-web-search').checked;
-            const enableTmdbTool = document.getElementById('reai-tmdb-tool').checked;
             
             // If instructions are not included but custom prompt is provided,
             // append JSON formatting instructions
@@ -931,9 +870,7 @@
                     body: JSON.stringify({
                         custom_prompt: customPrompt || null,
                         include_instructions: includeInstructions,
-                        include_filename: includeFilename,
-                        enable_web_search: enableWebSearch,
-                        enable_tmdb_tool: enableTmdbTool
+                        include_filename: includeFilename
                     })
                 });
                 
