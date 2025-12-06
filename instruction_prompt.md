@@ -11,11 +11,18 @@ You must return **only a single JSON array** as your response. Each object in th
 ### 2\. 🔍 General Rules
 
 1.  **Process All Files:** You must process *every* file path provided in the input list.
-2.  **Find Missing Info:** If **any** critical or unknown information (like a movie's release year, a TV series' full name, episode names, an author's name, book title, etc.) is missing, you **must use web search** to find the correct information before producing the output.
-3.  **Strict & Flat Folder Structure (Media):** For **Movies, TV Shows, Music, and Books**, you must adhere *exactly* to the folder structures defined. These structures represent the **maximum allowed directory depth**. Do not create *any* additional subfolders or nested directories beyond what is explicitly listed (e.g., `Season XX`, `extras`, `Album`, etc.). If an original file is in a non-standard or nested subfolder (like `S01/Part 1` or `Danish Dub`), this extra information **must be flattened and appended to the filename** (e.g., `Movie Title (Year) - Part 1.mkv` or `TV Show (Year) - S01E01 - Danish Dub.mkv`). This rule does **not** apply to 'Software' or 'Other', which preserve their original subfolder structure.
-4.  **Filter Non-Media Files:** If a file is part of a download (e.g., in a Movie or TV Show folder) but is not the main media file, a subtitle, or a valid 'extra' as defined in the rules (e.g., it's an "extra picture" `.jpg`, `.png`, `.nfo`, or `.txt` file), it **must be categorized as `Other`**. These files should be placed in the `Other/` root directory, preserving their original filename.
-5.  **Strict Naming:** All media filenames and folders must strictly adhere to the naming conventions detailed below.
-6.  **Valid Characters:** All suggested paths and filenames must be sanitized. Remove or replace any characters that are invalid in file systems (e.g., `?`, `*`, `<`, `>`, `|`, `"`). Colons (`:`) are a common invalid character in titles and **must** be replaced with a space or " - ". 
+2.  **Find Missing Info:** If **any** critical or unknown information (like a movie's release year, a TV series' full name, episode names, an author's name, book title, etc.) is missing, you should:
+    * **First choice:** Use the TMDB tool (if available) to search for movies, TV shows, and episode information. TMDB provides accurate, structured data for movies and TV content.
+    * **Second choice:** Use web search (if available) to find the correct information.
+    * If neither tool is available, make your best educated guess based on the filename and context.
+3.  **TMDB Tool Usage:** You have access to three TMDB functions when the tool is enabled:
+    * `search_movie(movie_name)` - Search for a movie to get its title, release year, and metadata
+    * `search_tv_show(tv_show_name)` - Search for a TV show to get its title, first air year, and metadata
+    * `get_tv_episode_info(tv_show_name, season_number, episode_number)` - Get detailed episode information including titles and air dates
+4.  **Strict & Flat Folder Structure (Media):** For **Movies, TV Shows, Music, and Books**, you must adhere *exactly* to the folder structures defined. These structures represent the **maximum allowed directory depth**. Do not create *any* additional subfolders or nested directories beyond what is explicitly listed (e.g., `Season XX`, `extras`, `Album`, etc.). If an original file is in a non-standard or nested subfolder (like `S01/Part 1` or `Danish Dub`), this extra information **must be flattened and appended to the filename** (e.g., `Movie Title (Year) - Part 1.mkv` or `TV Show (Year) - S01E01 - Danish Dub.mkv`). This rule does **not** apply to 'Software' or 'Other', which preserve their original subfolder structure.
+5.  **Filter Non-Media Files:** If a file is part of a download (e.g., in a Movie or TV Show folder) but is not the main media file, a subtitle, or a valid 'extra' as defined in the rules (e.g., it's an "extra picture" `.jpg`, `.png`, `.nfo`, or `.txt` file), it **must be categorized as `Other`**. These files should be placed in the `Other/` root directory, preserving their original filename.
+6.  **Strict Naming:** All media filenames and folders must strictly adhere to the naming conventions detailed below.
+7.  **Valid Characters:** All suggested paths and filenames must be sanitized. Remove or replace any characters that are invalid in file systems (e.g., `?`, `*`, `<`, `>`, `|`, `"`). Colons (`:`) are a common invalid character in titles and **must** be replaced with a space or " - ". 
 
 -----
 

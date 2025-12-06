@@ -337,9 +337,10 @@ def re_ai_job(job_id):
         include_instructions = data.get('include_instructions', True)
         include_filename = data.get('include_filename', True)
         enable_web_search = data.get('enable_web_search', False)
-        logger.debug(f"Re-AI job data: custom_prompt={bool(custom_prompt)}, include_instructions={include_instructions}, include_filename={include_filename}, enable_web_search={enable_web_search}")
+        enable_tmdb_tool = data.get('enable_tmdb_tool', False)
+        logger.debug(f"Re-AI job data: custom_prompt={bool(custom_prompt)}, include_instructions={include_instructions}, include_filename={include_filename}, enable_web_search={enable_web_search}, enable_tmdb_tool={enable_tmdb_tool}")
         
-        success = orchestrator.re_ai_job(job_id, custom_prompt, include_instructions, include_filename, enable_web_search)
+        success = orchestrator.re_ai_job(job_id, custom_prompt, include_instructions, include_filename, enable_web_search, enable_tmdb_tool)
         
         if success:
             logger.info(f"Job {job_id} queued for re-processing")
@@ -399,17 +400,20 @@ def update_config():
         'OPENAI_MODEL',
         'OLLAMA_MODEL',
         'ENABLE_WEB_SEARCH',
+        'ENABLE_TMDB_TOOL',
         'AI_CALL_DELAY_SECONDS',
         'JELLYFIN_REFRESH_ENABLED',
         'APP_PASSWORD',
         'ADMIN_PASSWORD',
         'GOOGLE_API_KEY',
         'OPENAI_API_KEY',
+        'TMDB_API_KEY',
         'OLLAMA_BASE_URL',
         'OLLAMA_TEMPERATURE',
         'OLLAMA_NUM_PREDICT',
         'OLLAMA_TOP_K',
         'OLLAMA_TOP_P',
+        'OLLAMA_KEEP_ALIVE',
         'JELLYFIN_API_KEY'
     ]
     

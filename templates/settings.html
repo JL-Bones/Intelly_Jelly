@@ -841,6 +841,24 @@
                         </div>
                         
                         <div class="form-group">
+                            <div class="checkbox-group">
+                                <input type="checkbox" id="tmdb-tool" name="ENABLE_TMDB_TOOL">
+                                <label for="tmdb-tool">Enable TMDB Tool</label>
+                            </div>
+                            <small>Allow AI to query The Movie Database for accurate movie/TV show information (all providers)</small>
+                        </div>
+                        
+                        <div class="form-group" id="tmdb-api-key-group" style="display: none;">
+                            <label for="tmdb-api-key">TMDB API Key</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" id="tmdb-api-key" name="TMDB_API_KEY" placeholder="Enter TMDB API Key" style="flex: 1;">
+                                <button type="button" id="reveal-tmdb-key" class="reveal-key-btn" style="display: none;" onclick="toggleRevealKey('tmdb')">👁️</button>
+                                <button type="button" id="delete-tmdb-key" class="delete-key-btn" style="display: none;" onclick="deleteApiKey('tmdb')">Delete</button>
+                            </div>
+                            <small>Required for TMDB tool. Get your API key from <a href="https://www.themoviedb.org/settings/api" target="_blank">TMDB Settings</a></small>
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="ai-delay">API Call Delay (seconds)</label>
                             <input type="number" id="ai-delay" name="AI_CALL_DELAY_SECONDS" min="0" max="10" step="0.5" placeholder="2">
                             <small>Delay between API calls to avoid rate limiting (default: 2 seconds)</small>
@@ -1041,6 +1059,11 @@
                 document.getElementById('delete-jellyfin-key').style.display = 'none';
                 document.getElementById('reveal-jellyfin-key').style.display = 'none';
                 delete document.getElementById('jellyfin-api-key').dataset.fullKey;
+            } else if (keyType === 'tmdb') {
+                document.getElementById('tmdb-api-key').value = '';
+                document.getElementById('delete-tmdb-key').style.display = 'none';
+                document.getElementById('reveal-tmdb-key').style.display = 'none';
+                delete document.getElementById('tmdb-api-key').dataset.fullKey;
             }
         }
         
@@ -1221,6 +1244,7 @@
                 const googleKey = currentConfig.GOOGLE_API_KEY || '';
                 const openaiKey = currentConfig.OPENAI_API_KEY || '';
                 const jellyfinKey = currentConfig.JELLYFIN_API_KEY || '';
+                const tmdbKey = currentConfig.TMDB_API_KEY || '';
                 
                 if (googleKey) {
                     document.getElementById('google-api-key').value = maskApiKey(googleKey);
@@ -1248,6 +1272,21 @@
                     document.getElementById('reveal-jellyfin-key').title = 'Show key';
                     document.getElementById('delete-jellyfin-key').style.display = 'inline-block';
                 }
+                
+                if (tmdbKey) {
+                    document.getElementById('tmdb-api-key').value = maskApiKey(tmdbKey);
+                    document.getElementById('tmdb-api-key').dataset.fullKey = tmdbKey;
+                    document.getElementById('reveal-tmdb-key').style.display = 'inline-block';
+                    document.getElementById('reveal-tmdb-key').textContent = '👁️';
+                    document.getElementById('reveal-tmdb-key').title = 'Show key';
+                    document.getElementById('delete-tmdb-key').style.display = 'inline-block';
+                }
+                
+                // Handle TMDB tool checkbox and show/hide API key field
+                const tmdbToolCheckbox = document.getElementById('tmdb-tool');
+                const tmdbApiKeyGroup = document.getElementById('tmdb-api-key-group');
+                tmdbToolCheckbox.checked = currentConfig.ENABLE_TMDB_TOOL || false;
+                tmdbApiKeyGroup.style.display = tmdbToolCheckbox.checked ? 'block' : 'none';
                 
                 await loadModels();
                 restoreSectionStates();
@@ -1367,6 +1406,12 @@
         // Add event listener for model dropdown
         document.getElementById('ai-model').addEventListener('change', handleModelChange);
         
+        // Add event listener for TMDB tool checkbox
+        document.getElementById('tmdb-tool').addEventListener('change', function() {
+            const tmdbApiKeyGroup = document.getElementById('tmdb-api-key-group');
+            tmdbApiKeyGroup.style.display = this.checked ? 'block' : 'none';
+        });
+        
         // Function to manually refresh Ollama models
         async function refreshOllamaModels() {
             const provider = document.getElementById('ai-provider').value;
@@ -1468,15 +1513,20 @@
             const formData = new FormData(e.target);
             const config = {};
             
+            // Always explicitly set checkbox values (unchecked boxes don't appear in FormData)
+            config.ENABLE_WEB_SEARCH = document.getElementById('web-search').checked;
+            config.JELLYFIN_REFRESH_ENABLED = document.getElementById('jellyfin-refresh').checked;
+            config.ENABLE_TMDB_TOOL = document.getElementById('tmdb-tool').checked;
+            
             for (const [key, value] of formData.entries()) {
-                if (key === 'ENABLE_WEB_SEARCH' || key === 'JELLYFIN_REFRESH_ENABLED') {
-                    const elementId = key === 'ENABLE_WEB_SEARCH' ? 'web-search' : 'jellyfin-refresh';
-                    config[key] = document.getElementById(elementId).checked;
+                if (key === 'ENABLE_WEB_SEARCH' || key === 'JELLYFIN_REFRESH_ENABLED' || key === 'ENABLE_TMDB_TOOL') {
+                    // Skip - already handled above
+                    continue;
                 } else if (key === 'AI_CALL_DELAY_SECONDS') {
                     config[key] = parseFloat(value) || 2;
                 } else if (key === 'OLLAMA_TEMPERATURE' || key === 'OLLAMA_TOP_P') {
                     config[key] = parseFloat(value);
-                } else if (key === 'OLLAMA_NUM_PREDICT' || key === 'OLLAMA_TOP_K') {
+                } else if (key === 'OLLAMA_NUM_PREDICT' || key === 'OLLAMA_TOP_K' || key === 'OLLAMA_KEEP_ALIVE') {
                     config[key] = parseInt(value);
                 } else if (key === 'GOOGLE_API_KEY') {
                     // Use full key if it exists (not changed), otherwise use new value
@@ -1495,6 +1545,12 @@
                     const jellyfinInput = document.getElementById('jellyfin-api-key');
                     config[key] = jellyfinInput.dataset.fullKey && value === maskApiKey(jellyfinInput.dataset.fullKey) 
                         ? jellyfinInput.dataset.fullKey 
+                        : value;
+                } else if (key === 'TMDB_API_KEY') {
+                    // Use full key if it exists (not changed), otherwise use new value
+                    const tmdbInput = document.getElementById('tmdb-api-key');
+                    config[key] = tmdbInput.dataset.fullKey && value === maskApiKey(tmdbInput.dataset.fullKey) 
+                        ? tmdbInput.dataset.fullKey 
                         : value;
                 } else if (key === 'AI_MODEL') {
                     // Handle custom model

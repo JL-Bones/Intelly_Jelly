@@ -56,13 +56,15 @@ class ConfigManager:
             "GOOGLE_MODEL": "gemini-2.5-flash",
             "OPENAI_MODEL": "gpt-5-mini",
             "ENABLE_WEB_SEARCH": True,
+            "ENABLE_TMDB_TOOL": False,
             "AI_CALL_DELAY_SECONDS": 2,
             "JELLYFIN_REFRESH_ENABLED": False,
             "APP_PASSWORD": "",
             "ADMIN_PASSWORD": "",
             "GOOGLE_API_KEY": "",
             "OPENAI_API_KEY": "",
-            "JELLYFIN_API_KEY": ""
+            "JELLYFIN_API_KEY": "",
+            "TMDB_API_KEY": ""
         }
 
     def _start_watching(self):

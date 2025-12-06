@@ -95,22 +95,24 @@ Intelly_Jelly/
 Intelly Jelly supports three AI providers. Choose the one that fits your needs:
 
 ### Google AI (Recommended)
-The application can be configured through the web interface at `/settings` (requires admin login). Key settings include:
+- **Model**: `gemini-2.5-flash` (default, fast and accurate)
+- **Pros**: Excellent accuracy, supports web search and TMDB tool
+- **Cons**: Requires API key, has rate limits
+- **Setup**:
+  1. Get API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+  2. In Settings, ensure "Google AI" is selected as provider
+  3. Enter your API key
+  4. Enable web search and/or TMDB tool if desired
 
-- **Folder Paths**: Downloading, completed, and library directories
-- **AI Provider**: Choose between Google AI (recommended), OpenAI, or Ollama (local)
-- **AI Settings**: API keys, model selection, and Ollama base URL
-- **Web Search**: Enable AI to search the web for missing metadata (Google AI & OpenAI only)
-- **Auto-Processing**: Enable/disable automatic file organization
-- **Passwords**: Set app and admin passwords
-- **Jellyfin Integration**: Optional library refresh triggers
-
-Configuration is stored in `config.json` and auto-reloads without restart.
+### OpenAI
+- **Model**: `gpt-5-mini` (default, configurable)
+- **Pros**: Reliable, supports web search and TMDB tool
+- **Cons**: Requires API key, costs per request
 - **Setup**:
   1. Get API key from [OpenAI Platform](https://platform.openai.com/api-keys)
   2. In Settings, select "OpenAI" as provider
   3. Enter your API key
-  4. Enable web search if desired
+  4. Enable web search and/or TMDB tool if desired
 
 ### Ollama (Local AI)
 - **Model**: `llama3.2` (default, configurable)
@@ -136,17 +138,56 @@ Configuration is stored in `config.json` and auto-reloads without restart.
 
 **Note**: Ollama models run on your local machine, so performance depends on your hardware (GPU recommended).
 
-## Configuration
-   Open your browser to `http://localhost:5000`
+## TMDB Tool (The Movie Database)
+
+Intelly Jelly can use The Movie Database (TMDB) API as a tool for AI to query accurate movie and TV show information. This provides more reliable metadata than web search alone.
+
+### What the TMDB Tool Does
+
+When enabled, the AI can call these functions:
+- **Search Movie** - Get accurate movie titles, release years, and metadata
+- **Search TV Show** - Get TV show titles, first air dates, and metadata  
+- **Get Episode Info** - Get specific episode titles, numbers, and air dates for TV seasons
+
+### Benefits Over Web Search
+
+- ✅ Structured, accurate data directly from TMDB's database
+- ✅ No parsing of web pages or dealing with ambiguous search results
+- ✅ Episode titles and numbers for TV shows
+- ✅ Works with all AI providers (Google AI, OpenAI, and Ollama)
+- ✅ Complements web search - use both together for best results
+
+### Setup
+
+1. **Get TMDB API Key**:
+   - Create account at [themoviedb.org](https://www.themoviedb.org)
+   - Go to Settings → API
+   - Generate a v3 API Key (free for personal use)
+
+2. **Configure in Intelly Jelly**:
+   - Open Settings page (requires admin login)
+   - Find "Enable TMDB Tool" checkbox under AI Configuration
+   - Check the box to enable
+   - Enter your TMDB API key in the field that appears
+   - Save settings
+
+3. **How It Works**:
+   - When AI encounters a movie or TV show file, it can query TMDB
+   - TMDB returns accurate titles, years, and episode information
+   - AI uses this data to organize files correctly
+   - TMDB tool works alongside web search (both can be enabled)
+
+**Note**: TMDB tool does NOT replace web search - they serve different purposes. TMDB is best for movie/TV metadata, while web search handles general information, music, books, etc.
 
 ## Configuration
 
 The application can be configured through the web interface at `/settings` (requires admin login). Key settings include:
 
 - **Folder Paths**: Downloading, completed, and library directories
-- **AI Provider**: Choose between Google AI (recommended) or OpenAI
-- **AI Settings**: API keys and model selection
-- **Web Search**: Enable AI to search the web for missing metadata
+- **AI Provider**: Choose between Google AI (recommended), OpenAI, or Ollama (local)
+- **AI Settings**: API keys, model selection, and Ollama base URL
+- **Web Search**: Enable AI to search the web for missing metadata (Google AI & OpenAI only)
+- **TMDB Tool**: Enable TMDB API for accurate movie/TV show information (all providers)
 - **Auto-Processing**: Enable/disable automatic file organization
 - **Passwords**: Set app and admin passwords
 - **Jellyfin Integration**: Optional library refresh triggers

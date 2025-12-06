@@ -31,6 +31,7 @@ class Job:
         self.include_instructions: bool = True
         self.include_filename: bool = True
         self.enable_web_search: bool = False
+        self.enable_tmdb_tool: bool = False
         self.retry_count: int = 0
         self.max_retries: int = 3
         self._missing_since: Optional[float] = None
