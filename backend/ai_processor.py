@@ -397,11 +397,11 @@ class AIProcessor:
             # Use Ollama's generate endpoint with configurable parameters
             url = f"{base_url}/api/generate"
             
-            # Get Ollama parameters from config (with defaults)
-            temperature = self.config_manager.get('OLLAMA_TEMPERATURE', 0.1)
-            num_predict = self.config_manager.get('OLLAMA_NUM_PREDICT', 2048)
-            top_k = self.config_manager.get('OLLAMA_TOP_K', 40)
-            top_p = self.config_manager.get('OLLAMA_TOP_P', 0.9)
+            # Get Ollama parameters from config (with defaults) and ensure they're proper numeric types
+            temperature = float(self.config_manager.get('OLLAMA_TEMPERATURE', 0.1))
+            num_predict = int(self.config_manager.get('OLLAMA_NUM_PREDICT', 2048))
+            top_k = int(self.config_manager.get('OLLAMA_TOP_K', 40))
+            top_p = float(self.config_manager.get('OLLAMA_TOP_P', 0.9))
             
             payload = {
                 "model": model,
@@ -419,12 +419,38 @@ class AIProcessor:
             
             response = requests.post(url, json=payload, timeout=120)
             self.last_api_call_time = time.time()
+            
+            # Log response before raising error
+            if response.status_code != 200:
+                logger.error(f"Ollama API returned status code: {response.status_code}")
+                logger.error(f"Response body: {response.text}")
+                try:
+                    error_data = response.json()
+                    logger.error(f"Error details: {json.dumps(error_data, indent=2)}")
+                except:
+                    pass
+            
             response.raise_for_status()
             
             logger.info(f"Received successful response from Ollama API (status: {response.status_code})")
             
             data = response.json()
-            text = data.get('response', '')
+            
+            # Handle thinking models - check if there's a thinking field
+            # For models like deepseek-r1, the response structure includes thinking and content separately
+            if 'message' in data and isinstance(data['message'], dict):
+                # New format with message object
+                message = data['message']
+                if 'thinking' in message and message['thinking']:
+                    # Model produced thinking - extract actual content
+                    text = message.get('content', '')
+                    logger.info("Detected thinking model output - extracted content field")
+                else:
+                    # No thinking, use content normally
+                    text = message.get('content', '')
+            else:
+                # Legacy format - use response field
+                text = data.get('response', '')
             
             # Log full response
             logger.info("=" * 80)
@@ -432,6 +458,8 @@ class AIProcessor:
             logger.info("=" * 80)
             logger.info(f"Status Code: {response.status_code}")
             logger.info(f"Full Response:\n{json.dumps(data, indent=2)}")
+            if 'message' in data and 'thinking' in data.get('message', {}):
+                logger.info(f"Thinking detected (length: {len(data['message']['thinking'])} chars)")
             logger.info("=" * 80)
             
             logger.debug(f"Raw AI response length: {len(text)} characters")

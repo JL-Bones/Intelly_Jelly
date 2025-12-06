@@ -14,12 +14,18 @@ from backend.backend_orchestrator import BackendOrchestrator
 from backend.ai_processor import AIProcessor
 from backend.library_browser import LibraryBrowser
 
+# Configure logging with UTF-8 encoding to handle emoji and special characters
+import sys
+file_handler = logging.FileHandler('intelly_jelly.log', encoding='utf-8')
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.stream.reconfigure(encoding='utf-8') if hasattr(stream_handler.stream, 'reconfigure') else None
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('intelly_jelly.log'),
-        logging.StreamHandler()
+        file_handler,
+        stream_handler
     ]
 )
 

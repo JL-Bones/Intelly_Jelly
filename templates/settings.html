@@ -1474,6 +1474,10 @@
                     config[key] = document.getElementById(elementId).checked;
                 } else if (key === 'AI_CALL_DELAY_SECONDS') {
                     config[key] = parseFloat(value) || 2;
+                } else if (key === 'OLLAMA_TEMPERATURE' || key === 'OLLAMA_TOP_P') {
+                    config[key] = parseFloat(value);
+                } else if (key === 'OLLAMA_NUM_PREDICT' || key === 'OLLAMA_TOP_K') {
+                    config[key] = parseInt(value);
                 } else if (key === 'GOOGLE_API_KEY') {
                     // Use full key if it exists (not changed), otherwise use new value
                     const googleInput = document.getElementById('google-api-key');
